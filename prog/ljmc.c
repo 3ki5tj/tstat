@@ -112,7 +112,7 @@ static void domc(lj_t *lj)
     
     /* exact MC sampling */
     tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d, lj->dof,
-        thermdt, lj->epot, Emin, Emax, &lj->ekin, &lj->tkin);
+        thermdt, lj->epot, &lj->ekin, &lj->tkin);
     lj->etot = lj->ekin + lj->epot;
 
     av_add(ave, lj->etot);

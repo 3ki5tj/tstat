@@ -11,7 +11,7 @@ set multiplot
 set lmargin 3.5
 set rmargin 1.0
 set tmargin 2.5
-set bmargin 1.5
+set bmargin 2.0
 tcfont="Arial, 10"
 
 N=108
@@ -19,6 +19,7 @@ set mytics 5
 set ytics 0.1 font tcfont offset 0.3, 0 
 set mxtics 4
 set xtics 2 font tcfont offset 0, 0.3
+set xlabel "{/Arial-Italic E}" offset 0, 1
 set key spacing 1.5
 
 dx = 0.01
@@ -31,12 +32,14 @@ set label 4 "(d)" at screen .3333+dx, .5-dy
 set label 5 "(e)" at screen .6667+dx, 1-dy
 set label 6 "(f)" at screen .6667+dx, .5-dy
 
+# half of the bin size
+dx2 = 0.02
 
 set size 0.3333, 0.5
 
 set origin 0.0, 0.5
 
-set title "Langevin dynamics"
+set title "Langevin dynamics" offset 0, -0.2
 
 plot [][0:] \
   "../data/lang.001d.001/avb.dat" u ($1/N):($5*N) w l t "{/Symbol-Oblique z} = 1", \
@@ -78,7 +81,7 @@ plot [][0:] \
 
 set origin 0.6667, 0.5
 
-set title "Nose-Hoover, Q = 30"
+set title "Nose-Hoover, {/Arial-Italic Q} = 30"
 
 plot [][0:0.4] \
   "../data/nh30d.002/avb.dat" u ($1/N):($5*N)  w l t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.002", \

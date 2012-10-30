@@ -19,6 +19,7 @@ int nsteps = 1000000000;
 real mddt = 0.002f;
 real tp = 1.5f;
 real thermdt = 0.05f;
+int method = 1;
 
 char *fnpdb = "pdb/1VII.pdb";
 real emin = 0.f;
@@ -42,6 +43,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-d", "%r", &mddt,     "time step for molecular dynamics");
   argopt_add(ao, "-q", "%r", &thermdt,  "time step for mc-vrescaling thermostat");
   argopt_add(ao, "-c", "%r", &rcc,      "cutoff distance for selecting contacts");
+  argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: vrescale");  
   argopt_add(ao, "--emin", "%r", &emin,     "minimal total energy");
   argopt_add(ao, "--emax", "%r", &emax,     "maximal total energy");
   argopt_add(ao, "--edel", "%r", &edel,     "total energy interval");
@@ -90,10 +92,13 @@ static void domd(void)
     hs_add1(hs, 0, w->epot, 1.0, HIST_VERBOSE); /* add to histogram */
 
     tpe = 1.0/avb_getbet(avb, w->etot);
-    
-    //tacc += avb_mcvrescale(avb, (real *) w->v, w->n * 3, w->dof, 
-    //    thermdt, w->epot, &w->ekin, &w->tkin);    
-    md_vrescale3d(w->v, w->n, w->dof, tpe, thermdt, &w->ekin, &w->tkin);
+   
+    if (method == 0) { 
+      tacc += avb_mcvrescale(avb, (real *) w->v, w->n * 3, w->dof, 
+          thermdt, w->epot, &w->ekin, &w->tkin);
+    } else {
+      md_vrescale3d(w->v, w->n, w->dof, tpe, thermdt, &w->ekin, &w->tkin);
+    }
     av_add(avep, w->epot);
     av_add(avet, w->etot);
 
