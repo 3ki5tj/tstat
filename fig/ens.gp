@@ -10,8 +10,8 @@ set output "ens.ps"
 # draw a gamma distribution
 n = 100;
 p(x) = exp(-x-lgamma(n))*x**(n-1);
-a = 20;
-b = 180;
+a = 10;
+b = 190;
 flat(x) = ((x>a && x < b) ? 1.0/(b - a) : 0.0);
 
 unset xtics

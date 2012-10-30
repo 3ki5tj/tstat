@@ -16,5 +16,5 @@ ljvol: avp.h
 	$(CC) -o $@ $<
 
 clean:
-	rm -f $(APP) *~ a.out
+	rm -f $(APP) *~ a.out  *avb.dat avp.dat epot.his  *.pos
 
