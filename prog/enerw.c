@@ -33,12 +33,14 @@ INLINE avb_t *avb_load(const char *fn)
   avb_t *avb = NULL;
   char s[1024] = "";
   int i, n;
-  double emin, emax, edel, ene, vis, bet0, b, b0, w, w0, uav, cs;
+  double emin, emax, edel, ene, vis, b, b0, w, w0, uav, cs;
   /* default parameters */
-  int np = 108;
   int dof = 318;
-  int ensexp = 2;
-  double prv0 = 0.06;
+  double bet0 = 1.0;
+
+  if (strcmp(fn, "goavb.dat") == 0) { /* hack for 1VII simulation */
+    dof = 102; bet0 = 0.5;
+  }
 
   xfopen(fp, fn, "r", return NULL);
   fgets(s, sizeof s, fp);
@@ -108,20 +110,45 @@ INLINE double avb_getlnwtot(avb_t *avb, double u)
   double x0, x1, bet, hdof = .5 * avb->dof;
   double lng, lng1, lng0, lnw = -1e300, lnomg = 0;
 
-  for (i = 0; i < avb->n; i++) {
+  for (i = -1; i <= avb->n; i++) {
     x0 = avb->emin + i * avb->edel - u;
+    if (i < 0) x0 = -1e300;
     x1 = avb->emin + (i + 1) * avb->edel - u;
-    bet = av_getave( &avb->av[i] );
+    if (i >= avb->n) x1 = 1e300;
+    if (i >= 0 && i < avb->n) {
+      bet = av_getave( &avb->av[i] );
+    } else {
+      bet = avb->bet0;
+    }
+    if (bet < 0) {
+      fprintf(stderr, "bad bet %g, i %d/n %d\n", bet, i, avb->n);
+      continue;
+    }
     if (x1 > 0) {
-      lng1 = lnincgam(hdof, bet * x1);
+      if (i == avb->n) {
+        lng1 = lngam(hdof);
+      } else {
+        lng1 = lnincgam(hdof, bet * x1);
+      }
       if (x0 > 0) lng0 = lnincgam(hdof, bet * x0);
       else lng0 = -1e300;
       if (lng1 < lng0) {
         printf("bad x0 %g, lng0 %g, x1 %g, lng1 %g, i %d, bet %g\n",
             x0, lng0, x1, lng1, i, bet);
       } else {
-        lng = lndif(lng1, lng0) -hdof * log(bet) + bet * x0 - lnomg;
+        if (i == 0) {
+          lng = lnincgam(hdof, bet*x1);
+        }else if (i == avb->n) {
+          lng = lnincgamup(hdof, bet*x0);
+        } else {
+          lng = lndif(lng1, lng0);
+        }
+        lng += -hdof * log(bet) + bet * x0 - lnomg;
         lnw = lnadd(lnw, lng);
+        if (i == avb->n) {
+          printf("lng %g, lnw %g, x1 %g, lng1 %g, x0 %g, lng0 %g, bet %g, lnomg %g, hdof %g\n",
+              lng, lnw, x1, lng1, x0, lng0, bet, lnomg, hdof);
+        }
       }
     }
     lnomg += bet * avb->edel;
