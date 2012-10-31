@@ -1,6 +1,6 @@
 CC=icc -O3 -Wall -Wunused
 
-APP=ljmd lju ljmc ljvol gomd
+APP=ljmd lju ljmc ljvol gomd volrw
 
 all: $(APP)
 
@@ -11,6 +11,8 @@ ljmd: avb.h
 lju: avb.h
 
 ljvol: avp.h
+
+volrw: avp.h
 
 %:: %.c
 	$(CC) -o $@ $<

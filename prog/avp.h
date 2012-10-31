@@ -1,10 +1,11 @@
 typedef struct {
   double vmin, vmax;
   int np; /* number of particles */
+  int dof; /* degrees of freedom */
   double rhomin, rhomax, rhodel;
   double prv0; /* default pressure */
   double wlimit;
-  int n, dof;
+  int n;
   int ensexp; /* dV / V^ensexp */
   double *vis; /* # of visits */
   av_t *av, *av0;
@@ -120,23 +121,25 @@ INLINE int avp_write(avp_t *avp, const char *fn)
 {
   int i;
   FILE *fp;
-  double prv, cnt, prv0, cnt0, tot, scal, rho;
+  double prv, w, prv0, cnt0, tot, scal, rho, w0;
 
   xfopen(fp, fn, "w", return -1);
   /* count the total */
   for (tot = 0, i = 0; i < avp->n; i++)
     tot += avp->vis[i];
   scal = 1.0/tot;
-  fprintf(fp, "# %d %g %g %g\n", avp->n, avp->rhomin, avp->rhodel, tot);
+  fprintf(fp, "# %d %g %g %g %d %d %d %g\n", avp->n,
+    avp->rhomin, avp->rhodel, tot, avp->np, avp->dof, avp->ensexp, avp->prv0);
   
   for (i = 0; i < avp->n; i++) {
     prv = av_getave( &(avp->av[i]) );
-    cnt = avp->av[i].s;
+    w = avp->av[i].s;
     prv0 = av_getave( &(avp->av0[i]) );
+    w0 = avp->av0[i].s;
     cnt0 = avp->vis[i];
     rho = avp->rhomin + i * avp->rhodel;
-    fprintf(fp, "%g %g %g %g %g %g\n",
-      rho, prv, cnt, prv0, cnt0*scal/avp->rhodel, cnt0);
+    fprintf(fp, "%g %g %g %g %g %g %g\n",
+      rho, prv, w, prv0, cnt0*scal/avp->rhodel, cnt0, w0);
   }
   fclose(fp);
   return 0;
