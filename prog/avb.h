@@ -140,7 +140,8 @@ INLINE int avb_write(avb_t *avb, const char *fn)
     tot += avb->avu[i].s;
   }
   scal = 1.0/(tot*avb->edel);
-  fprintf(fp, "# %d %g %g %g\n", avb->n, avb->emin, avb->edel, tot);
+  fprintf(fp, "# %d %g %g %g %d %g\n", avb->n, avb->emin, avb->edel,
+      tot, avb->dof, avb->bet0);
   
   for (i = 0; i < avb->n; i++) {
     bet = av_getave( &(avb->av[i]) );

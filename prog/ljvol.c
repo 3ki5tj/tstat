@@ -12,7 +12,7 @@
 int N = 108;
 real rho = (real) 0.5;
 real rhomin = (real) 0.05;
-real rhomax = (real) 0.65;
+real rhomax = (real) 0.75;
 real rhodel = (real) 0.01;
 real rcdef = (real) 1000.0; /* cut-off distance, should be half box */
 real tp = (real) 1.2;

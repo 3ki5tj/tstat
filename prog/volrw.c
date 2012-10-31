@@ -3,11 +3,25 @@
 #define ZCOM_UTIL
 #define ZCOM_AV
 #define ZCOM_HIST
+#define ZCOM_ARGOPT
 #include "zcom.h"
 #include "avp.h"
 
 char *fnhis = "vol.his";
 char *fnavp = "avp.dat";
+
+/* handle input arguments */
+static void doargs(int argc, char **argv)
+{
+  argopt_t *ao = argopt_open(0);
+  argopt_add(ao, "-f", NULL, &fnavp,    "avp file");
+  argopt_add(ao, "-s", NULL, &fnhis,    "histogram file");
+  argopt_addhelp(ao, "-h");
+  argopt_parse(ao, argc, argv);
+
+  argopt_dump(ao);
+  argopt_close(ao);
+}
 
 /* load avp data from file */
 INLINE avp_t *avp_load(const char *fn)
@@ -56,6 +70,7 @@ static void output(avp_t *avp, hist_t *hs, const char *fn)
   int i, j, id, m = 10, nm;
   double dvol, *fe, *pr, rho0, rho1, p;
   
+  (void *) hs;
   nm = avp->n * m;
   xnew(pr, avp->n*m + 1);
   xnew(fe, avp->n*m + 1);
@@ -63,7 +78,7 @@ static void output(avp_t *avp, hist_t *hs, const char *fn)
   fe[0] = 0;
   for (i = 0; i < avp->n; i++) {
     p = av_getave( &avp->av[i] );
-    for (j = 0; j < m; j++) {
+    for (j = 0; j < m; j++) { /* add finer bins */
       rho0 = avp->rhomin + (i + 1.0*j/m) * avp->rhodel;
       rho1 = avp->rhomin + (i + 1.0*(j+1)/m) * avp->rhodel;
       dvol = avp->np/rho1 - avp->np/rho0;
@@ -85,18 +100,22 @@ static void output(avp_t *avp, hist_t *hs, const char *fn)
 }
 
 
-int main(void)
+int main(int argc, char **argv)
 {
   avp_t *avp;
   hist_t *hs;
+  int row, ver;
+  unsigned fflags;
   double vmin, vmax, vdel;
   
+  doargs(argc, argv);
+
   die_if ((avp = avp_load(fnavp)) == NULL, "cannot load avp from %s\n", fnavp);
-  vmin = 0;
-  vmax = 2.0*avp->np/avp->rhomin;
-  vdel = 1.0;
+  histgetinfo(fnhis, &row, &vmin, &vmax, &vdel, &ver, &fflags);
   hs = hs_open(1, vmin, vmax, vdel);
   die_if (hs_load(hs, fnhis, HIST_VERBOSE) != 0, "cannot load histogram from %s\n", fnhis);
   output(avp, hs, "fe.dat");
+  hs_close(hs);
+  avp_close(avp);
   return 0;
 }

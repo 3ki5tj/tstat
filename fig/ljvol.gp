@@ -68,7 +68,7 @@ set rmargin 5.0
 
 set label "{/Arial-Italic p} = 0.0696" at 0.43, 0.09
 plot [.05:.65][] \
-  0.0695 w l lt 4 not, \
+  0.0696 w l lt 4 not, \
   "../data/ljvol2b/avp.dat" u ($1 + hbin):($2) w l ls 1 t "Nose-Hoover", \
   "../data/ljvol3b/avp.dat" u ($1 + hbin):($2) w l ls 2 t "Langevin", \
   "../data/ljvol1b/avp.dat" u ($1 + hbin):($2) w l ls 3 t "Monte-Carlo", \
