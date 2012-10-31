@@ -95,7 +95,7 @@ static void outpute(avb_t *avb, const char *fn)
   
   xfopen(fp, fn, "w", return);
   for (i = 0; i <= nm; i++) {
-    ene = avb->emin + i * avb->edel/m;
+    ene = avb->emin + (i + .5) * avb->edel/m;
     fprintf(fp, "%g %g %g\n", ene, en[i], bt[i]);
   }
   fclose(fp);
@@ -145,10 +145,6 @@ INLINE double avb_getlnwtot(avb_t *avb, double u)
         }
         lng += -hdof * log(bet) + bet * x0 - lnomg;
         lnw = lnadd(lnw, lng);
-        if (i == avb->n) {
-          printf("lng %g, lnw %g, x1 %g, lng1 %g, x0 %g, lng0 %g, bet %g, lnomg %g, hdof %g\n",
-              lng, lnw, x1, lng1, x0, lng0, bet, lnomg, hdof);
-        }
       }
     }
     lnomg += bet * avb->edel;

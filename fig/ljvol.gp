@@ -29,9 +29,9 @@ set key spacing 1.5
 dx = 0.01
 dy = 0.03
 
-set linestyle 1 lc rgb "#ff0044" lt 1 
-set linestyle 2 lc rgb "#00cc00" lt 2
-set linestyle 3 lc rgb "#2200cc" lt 4
+set style line 1 lc rgb "#ff0044" lt 1 
+set style line 2 lc rgb "#22cc00" lt 2
+set style line 3 lc rgb "#2200cc" lt 4
 
 
 set label 1 "(a)" at screen dx, 1-dy
@@ -67,14 +67,15 @@ set y2label "{/Arial-Italic F}({/Arial-Italic n})" offset -3.0, 0
 set rmargin 5.0
 
 set label "{/Arial-Italic p} = 0.0696" at 0.43, 0.09
+sh = 0.2
 plot [.05:.65][] \
   0.0696 w l lt 4 not, \
   "../data/ljvol2b/avp.dat" u ($1 + hbin):($2) w l ls 1 t "Nose-Hoover", \
   "../data/ljvol3b/avp.dat" u ($1 + hbin):($2) w l ls 2 t "Langevin", \
   "../data/ljvol1b/avp.dat" u ($1 + hbin):($2) w l ls 3 t "Monte-Carlo", \
-  "../data/ljvol2b/fe.dat"  u ($1):($2 + 0.06940*N/$1 - 139.2) axes x1y2 w l ls 1 not, \
-  "../data/ljvol3b/fe.dat"  u ($1):($2 + 0.06967*N/$1 - 139.6) axes x1y2 w l ls 2 not, \
-  "../data/ljvol1b/fe.dat"  u ($1):($2 + 0.06963*N/$1 - 139.5) axes x1y2 w l ls 3 not
+  "../data/ljvol2b/fe.dat"  u ($1):($2 + 0.06940*N/$1 - 139.2 + sh) axes x1y2 w l ls 1 not, \
+  "../data/ljvol3b/fe.dat"  u ($1):($2 + 0.06967*N/$1 - 139.6 + sh) axes x1y2 w l ls 2 not, \
+  "../data/ljvol1b/fe.dat"  u ($1):($2 + 0.06963*N/$1 - 139.5 + sh) axes x1y2 w l ls 3 not
 
 
 unset multiplot
