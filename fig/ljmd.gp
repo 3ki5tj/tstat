@@ -68,7 +68,7 @@ plot [][0:] \
 
 set origin 0.3333, 0.5
 
-set title "Velocity-Rescaling"
+set title "Velocity-rescaling"
 
 set key width -2
 

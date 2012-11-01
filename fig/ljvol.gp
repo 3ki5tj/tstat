@@ -44,14 +44,14 @@ set size 0.5, 1.0
 set origin 0.0, 0.0
 
 #set title ""
-set xlabel "{/Arial-Italic n}" offset 0, 0.5
+set xlabel "{/Arial-Italic n} = {/Arial-Italic N}{/=6 &.}/{/Arial-Italic V}" offset 0, 0.5
 set ylabel "{/Symbol-Oblique r}({/Arial-Italic n})" offset 2.5, 0
-set key right bottom
+set key right bottom Left reverse
 
 plot [.05:.65][0:2] \
-  "../data/ljvol2b/avp.dat" u ($1 + hbin):($5) w l ls 1 t "Nose-Hoover", \
-  "../data/ljvol3b/avp.dat" u ($1 + hbin):($5) w l ls 2 t "Langevin", \
-  "../data/ljvol1b/avp.dat" u ($1 + hbin):($5) w l ls 3 t "Monte-Carlo"
+  "../data/ljvol2b/avp.dat" u ($1 + hbin):($5) w l ls 1 t "Nose-Hoover, {/Arial-Italic Q} = {/Arial-Italic W} = 300", \
+  "../data/ljvol3b/avp.dat" u ($1 + hbin):($5) w l ls 2 t "Langevin, {/Symbol-Oblique D}t = 5{/Symbol \264}10^{-5}", \
+  "../data/ljvol1b/avp.dat" u ($1 + hbin):($5) w l ls 3 t "Monte-Carlo, {/Symbol-Oblique D} = 0.05"
 
 
 set origin 0.5, 0.0
@@ -62,11 +62,11 @@ set key left top
 set ytics nomirror
 set my2tics 5
 set y2tics 5 font tcfont offset -0.7, 0
-set y2label "{/Arial-Italic F}({/Arial-Italic n})" offset -3.0, 0
+set y2label "{/Arial-Italic G} = {/Arial-Italic F} - {/Arial-Italic p V}" offset -2.5, 0
 
 set rmargin 5.0
 
-set label "{/Arial-Italic p} = 0.0696" at 0.43, 0.09
+set label "{/Arial-Italic p}^* = 0.0696" at 0.43, 0.09
 sh = 0.2
 plot [.05:.65][] \
   0.0696 w l lt 4 not, \

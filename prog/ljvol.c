@@ -44,7 +44,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-:", "%r", &rhodel,   "delta density");
   argopt_add(ao, "-1", "%d", &nsteps,   "number of simulation steps");
   argopt_add(ao, "-d", "%r", &mddt,     "time step for molecular dynamics");
-  argopt_add(ao, "-q", "%r", &thermdt,  "time step for vrescaling/mc thermostat");
+  argopt_add(ao, "-q", "%r", &thermdt,  "time step for vrescaling thermostat");
   argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: p-langevin; 2: Nose-Hoover");
   argopt_add(ao, "-a", "%r", &baroamp,  "amplitude for change volume by MC");
   argopt_add(ao, "-f", "%d", &barofreq, "mc change vol. every this # of steps");
