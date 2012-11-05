@@ -75,7 +75,7 @@ static void outpute(avb_t *avb, const char *fn)
 {
   FILE *fp;
   int i, j, id, m = 10, nm;
-  double dvol, *en, *bt, ene, b;
+  double *en, *bt, ene, b;
   
   nm = avb->n * m;
   xnew(bt, nm + 1);
@@ -157,7 +157,7 @@ INLINE double avb_getlnwtot0(avb_t *avb, double u)
 {
   int i;
   double x, bet, hdof = .5 * avb->dof;
-  double lng, lng1, lng0, lnw = -1e300, lnomg = 0;
+  double lng, lnw = -1e300, lnomg = 0;
 
   for (i = 0; i < avb->n; i++) {
     x = avb->emin + (i + .5) * avb->edel - u;
@@ -176,7 +176,7 @@ static void outputu(avb_t *avb, hist_t *hs, const char *fn)
 {
   FILE *fp;
   int i;
-  double s, u, ene, b, *lnw, *lng;
+  double s, u, *lnw, *lng;
   
   xnew(lnw, hs->n + 1);
   xnew(lng, hs->n + 1);

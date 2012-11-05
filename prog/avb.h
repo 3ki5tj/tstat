@@ -190,4 +190,40 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd, int dof,
   }
 }
 
+/* Exact Andersen theromstat */
+INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d, int dof,
+  real ep, real *ekin, real *tkin)
+{
+  int i, j;
+  real ek1 = *ekin, ek2, eki1, eki2, s, vi[3];
+  double r, sqtp, dS, bet1, bet2, etot1, etot2, lnrose;
+
+  i = (int)(rnd0() * n);
+  etot1 = ek1 + ep;
+  bet1 = avb_getbet(avb, etot1);
+  sqtp = 1.0/sqrt(bet1);
+  for (eki1 = eki2 = 0, j = 0; j < d; j++) {
+    eki1 += .5 * v[i*d + j] * v[i*d + j];
+    vi[j] = (real) (sqtp * grand0());
+    eki2 += .5 * vi[j] * vi[j];
+  }
+  ek2 = ek1 + eki2 - eki1;
+  etot2 = ek2 + ep;
+  
+  bet2 = avb_getbet(avb, etot2);
+  lnrose = .5*d*log(bet1/bet2);
+  dS = avb_getdS(avb, etot1, etot2);
+  r = bet2 * eki1 - bet1 * eki2 + dS + lnrose;
+
+  if (r <= 0 || rnd0() < exp(-r)) {
+    for (j = 0; j < d; j++)
+      v[i*d + j] = vi[j];
+    *ekin = ek2;
+    *tkin = 2.*ek2/dof; 
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 

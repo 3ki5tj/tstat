@@ -131,8 +131,13 @@ static void domd(lj_t *lj)
     } else if (method == 12) { /* wrong Nose-Hoover */
       md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ, &lj->ekin, &lj->tkin);
     } else if (method % 10 == 3) { /* Andersen */
-      if (rnd0() < tpmin/tpe || method == 13) /* 13: wrong Andersen thermostat */
-        md_anderson(lj->v, lj->n, lj->d, tpe);
+      if (method == 23) { /* exact Andersen */
+        tacc += avb_mcandersen(avb, lj->v, lj->n, lj->d, lj->dof, 
+          lj->epots, &lj->ekin, &lj->tkin);
+      } else { /* approximate Andersen */ 
+        if (rnd0() < tpmin/tpe || method == 13) /* 13: wrong Andersen thermostat */
+          md_andersen(lj->v, lj->n, lj->d, tpe);
+      }
     } else if (method == 4) { /* Langevin equation */
       md_langevin(lj->v, lj->n, lj->d, tpe, thermdt/tpe);
     } else if (method == 14) { /* wrong langevin dynamics */

@@ -12,7 +12,7 @@ $(bin): $(dep)
 	$(CC) -o $@ $<
 
 zip: zcom.h
-	zip tstatprog *.c zcom.h Makefile README
+	zip tstatprog *.c zcom.h avb.h avp.h Makefile README
 
 zcom.h: zcom.full.h GNUmakefile
 	./zcompick.py -i zcom.full.h -o zcom.h -k "def util ss rng opt argopt av rc rv2 rv3 md specfunc hist lj rotfit pdb cago" 
