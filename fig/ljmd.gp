@@ -61,9 +61,7 @@ set origin 0.0, 0.0
 set title "Anderson"
 
 plot [][0:] \
-  "../data/ands.4a/avb.dat" u ($1/N + hbin):($5*N) w l ls 1 t "{/Symbol-Oblique b}_m = 2.5", \
-  "../data/ands.1a/avb.dat" u ($1/N + hbin):($5*N) w l ls 2 t "{/Symbol-Oblique b}_m = 10", \
-  "../data/andsx/avb.dat"   u ($1/N + hbin):($5*N) w l ls 3 t "Metropolis", \
+  "../data/andsx/avb.dat"   u ($1/N + hbin):($5*N) w l ls 1 t "Metropolis", \
   "../data/ands0a/avb.dat"  u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified"
 
 
