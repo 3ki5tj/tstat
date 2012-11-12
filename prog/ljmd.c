@@ -20,6 +20,7 @@ int nsteps = 10000000;
 int method = 10;  /* thermostat method */
 int betmeth = 0; /* method for computing the temperature beta */
 real hooverQ = 100.f;  /* mass of the Hoover thermostat */
+int nhM = 5; /* number Nose-Hoover chain variables */
 int usesw = 0;
 real rshift = 2.0f;
 real emin = -4.f;
@@ -42,10 +43,11 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-1", "%d", &nsteps,   "number of simulation steps");
   argopt_add(ao, "-d", "%r", &mddt,     "time step for molecular dynamics");
   argopt_add(ao, "-q", "%r", &thermdt,  "time step for vrescaling/mc thermostat");
-  argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: vrescale; 2: hoover; 3: andersen; 4: langevin");
-  argopt_add(ao, "-M", "%d", &betmeth,  "0: plain average; 1: ratio average");
+  argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: vrescale; 2: hoover; 3: andersen; 4: langevin; see code for more");
+  argopt_add(ao, "-M", "%d", &betmeth,  "0: plain average (bet = <(N/2-1)/K>); 1: ratio average (bet = N/2/<K>)");
   argopt_add(ao, "-Y", "%r", &tpmin,    "minimal temperature to control the freq. for andersen T-stat");
   argopt_add(ao, "-Q", "%r", &hooverQ,  "mass of the thermostat");
+  argopt_add(ao, "-R", "%d", &nhM,      "number of Nose-Hoover chain variables");
   argopt_add(ao, "-w", "%b", &usesw,    "use switched potential");
   argopt_add(ao, "-s", "%r", &rshift,   "potential shift distance");
   argopt_add(ao, "--emin", "%r", &emin,     "minimal total energy");
@@ -70,7 +72,16 @@ static void domd(lj_t *lj)
   static av_t ave[1];
   avb_t *avb;
   double tpe = tp, zeta = 0, Emin, Emax;
+  real *nhQ, *nhv;
+  int i;
   hist_t *hs;
+
+  xnew(nhQ, nhM);
+  xnew(nhv, nhM);
+  for (i = 0; i < nhM; i++) {
+    nhQ[i] = (i == 0 ? hooverQ : 1.f);
+    nhv[i] = (real) ( sqrt(tp/nhQ[i]) * grand0() );
+  }
 
   if (method % 10 == 3 || method % 10 == 4) { /* allow all degrees of freedom */
     lj->dof = 3*lj->n;
@@ -95,8 +106,10 @@ static void domd(lj_t *lj)
       GETTPE();
       if (method == 102) { /* bad Nose-Hoover */
         md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ, &lj->ekin, &lj->tkin);
+      } else if (method == 32) { /* Nose-Hoover chain */
+        md_nhchain(lj->v, lj->n*lj->d, lj->dof, tp, tp/tpe, .5f*mddt, nhv, nhQ, nhM, &lj->ekin, &lj->tkin);
       } else { /* good (scaled) Nose-Hoover */
-        md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ*tpe, &lj->ekin, &lj->tkin);
+        md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ*tpe/tp, &lj->ekin, &lj->tkin);
       }
     }
     
@@ -127,9 +140,11 @@ static void domd(lj_t *lj)
     } else if (method == 101) { /* wrong velocity rescaling */
       md_vrescalex(lj->v, lj->n * lj->d, lj->dof, tpe, thermdt, &lj->ekin, &lj->tkin);
     } else if (method == 2 || method == 22) { /* Nose-Hoover */
-      md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ*tpe, &lj->ekin, &lj->tkin);
+      md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ*tpe/tp, &lj->ekin, &lj->tkin);
     } else if (method == 12) { /* wrong Nose-Hoover */
       md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ, &lj->ekin, &lj->tkin);
+    } else if (method == 32) { /* Nose-Hoover chain */
+      md_nhchain(lj->v, lj->n*lj->d, lj->dof, tp, tp/tpe, .5f*mddt, nhv, nhQ, nhM, &lj->ekin, &lj->tkin);
     } else if (method % 10 == 3) { /* Andersen */
       if (method == 23) { /* exact Andersen */
         tacc += avb_mcandersen(avb, lj->v, lj->n, lj->d, lj->dof, 
@@ -154,10 +169,11 @@ static void domd(lj_t *lj)
       hs_save(hs, "epot.his", HIST_ADDAHALF);
     }
   }
+  printf("etot %g\n", av_getave(ave)/lj->n);
   avb_write(avb, "avb.dat");
   avb_close(avb);
   hs_close(hs);
-  printf("etot %g\n", av_getave(ave)/lj->n);
+  free(nhQ); free(nhv);
 }
 
 int main(int argc, char **argv)

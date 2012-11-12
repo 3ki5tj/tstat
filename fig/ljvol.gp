@@ -49,10 +49,11 @@ set ylabel "Distribution {/Symbol-Oblique r}{/=6 &.}({/Arial-Italic n}{/=6 &.})"
 set key right bottom Left reverse
 
 plot [.05:.75][0:2] \
-  "../data/ljvolnhb/avp.dat" u ($1 + hbin):($5) w l ls 1 t "Nose-Hoover, {/Arial-Italic Q} = {/Arial-Italic W} = 300", \
-  "../data/ljvollangb/avp.dat" u ($1 + hbin):($5) w l ls 2 t "Langevin, {/Symbol-Oblique D}t = 5{/Symbol \264}10^{-5}", \
+  "../data/ljvolnhb/avp.dat" u ($1 + hbin):($5) w l ls 1 t "Nose-Hoover, {/Arial-Italic W} = {/Arial-Italic Q} = 300", \
+  "../data/ljvollangf300/avp.dat" u ($1 + hbin):($5) w l ls 2 t "Langevin, {/Arial-Italic W} = 300, {/Symbol-Oblique z} = 1", \
   "../data/ljvolmcb/avp.dat" u ($1 + hbin):($5) w l ls 3 t "Monte-Carlo, {/Symbol-Oblique D} = 0.05"
 
+# "../data/ljvollangb/avp.dat" u ($1 + hbin):($5) w l ls 2 t "Langevin, {/Symbol-Oblique D}t = 5{/Symbol \264}10^{-5}"
 
 set origin 0.5, 0.0
 
@@ -73,12 +74,14 @@ sh = 0.2
 plot [.05:.7][] \
   0.0696 w l lt 4 not, \
   "../data/ljvolnhb/avp.dat" u ($1 + hbin):($2) w l ls 1 t "Nose-Hoover", \
-  "../data/ljvollangb/avp.dat" u ($1 + hbin):($2) w l ls 2 t "Langevin", \
+  "../data/ljvollangf300/avp.dat" u ($1 + hbin):($2) w l ls 2 t "Langevin", \
   "../data/ljvolmcb/avp.dat" u ($1 + hbin):($2) w l ls 3 t "Monte-Carlo", \
   "../data/ljvolnhb/fe.dat"     u ($1):($2 + 0.069607*N/$1 - 139.4 + sh) axes x1y2 w l ls 1 not, \
-  "../data/ljvollangb/fe.dat"   u ($1):($2 + 0.069616*N/$1 - 139.45 + sh) axes x1y2 w l ls 2 not, \
+  "../data/ljvollangf300/fe.dat"   u ($1):($2 + 0.069511*N/$1 - 139.25 + sh) axes x1y2 w l ls 2 not, \
   "../data/ljvolmcb/fe.dat"     u ($1):($2 + 0.069639*N/$1 - 139.5 + sh) axes x1y2 w l ls 3 not
 
+#  "../data/ljvollangb/avp.dat" u ($1 + hbin):($2) w l ls 2 t "Langevin",
+#  "../data/ljvollangb/fe.dat"   u ($1):($2 + 0.069616*N/$1 - 139.45 + sh) axes x1y2 w l ls 2 not,
 
 unset multiplot
 unset output

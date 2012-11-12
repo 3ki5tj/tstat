@@ -195,7 +195,7 @@ INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d, int dof,
   real ep, real *ekin, real *tkin)
 {
   int i, j;
-  real ek1 = *ekin, ek2, eki1, eki2, s, vi[3];
+  real ek1 = *ekin, ek2, eki1, eki2, vi[3];
   double r, sqtp, dS, bet1, bet2, etot1, etot2, lnrose;
 
   i = (int)(rnd0() * n);

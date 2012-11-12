@@ -1,6 +1,6 @@
-# CC = gcc -Wall -Wextra -O0 -g3 -pedantic -std=c99 -Wno-unknown-pragmas -Wno-variadic-macros
+CC = gcc -Wall -Wextra -O0 -g3 -pedantic -std=c99 -Wno-unknown-pragmas -Wno-variadic-macros
 # optimized compiling
-CC = icc -Wall -O3 -g -vec_report0
+#CC = icc -Wall -O3 -g -vec_report0
 dep = zcom.h avb.h avp.h GNUmakefile
 bin = $(patsubst %.c,%, $(wildcard *.c))
 
@@ -9,7 +9,7 @@ all: $(bin)
 $(bin): $(dep)
 
 %: %.c
-	$(CC) -o $@ $<
+	$(CC) -o $@ $< -lm
 
 zip: zcom.h
 	zip tstatprog *.c zcom.h avb.h avp.h Makefile README
