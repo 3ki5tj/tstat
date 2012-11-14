@@ -18,6 +18,7 @@ set style line 2 lc rgb "#228800" lt 2
 set style line 3 lc rgb "#2200cc" lt 3
 set style line 4 lc rgb "#cc0088" lt 4
 set style line 5 lc rgb "#cc8800" lt 5
+set style line 9 lc rgb "#888888" lt 1 lw 0.5
 
 
 set lmargin 3.5
@@ -31,7 +32,7 @@ set ytics 0.1 font tcfont offset 0.3, 0
 set mxtics 4
 set xtics 2 font tcfont offset 0, 0.3
 set xlabel "{/Arial-Italic E}" offset 0, 1
-set key Left reverse spacing 1.2
+set key Left reverse spacing 1.15 font "Arial, 11"
 
 dx = 0.01
 dy = 0.03
@@ -45,7 +46,7 @@ set label 6 "(f)" at screen .6667+dx, .5-dy
 
 set size 0.3333, 0.5
 
-set origin 0.0, 0.5
+set origin 0.6667, 0.5
 
 set title "Langevin dynamics" offset 0, -0.2
 
@@ -56,12 +57,12 @@ plot [][0:.5] \
   "../data/langbad/avb.dat" u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified"
 
 
-set origin 0.0, 0.0
+set origin 0.6667, 0.0
 
 set title "Anderson"
 
 plot [][0:] \
-  "../data/andsx/avb.dat"   u ($1/N + hbin):($5*N) w l ls 1 t "Metropolis", \
+  "../data/andsx/avb.dat"   u ($1/N + hbin):($5*N) w l ls 1 t "Eq. (11)", \
   "../data/ands0a/avb.dat"  u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified"
 
 
@@ -78,31 +79,34 @@ plot [][0:] \
   "../data/vrbad/avb.dat" u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified" 
 
 
-set origin 0.3333, 0.
+set origin 0.0, 0.5
 
-set title "Nose-Hoover"
+set title "Nose-Hoover chain"
 
 set key width -1
 
-plot [][0:0.3] \
-  "../data/nh100/avb.dat" u ($1/N + hbin):($5*N) w l ls 1 t "{/Arial-Italic Q} = 100", \
-  "../data/nh300/avb.dat" u ($1/N + hbin):($5*N) w l ls 2 t "{/Arial-Italic Q} = 300", \
-  "../data/nh1000/avb.dat" u ($1/N + hbin):($5*N) w l ls 3 t "{/Arial-Italic Q} = 1000", \
-  "../data/nh300bad/avb.dat" u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified"
-
-set origin 0.6667, 0.
+plot [][0.:0.35] \
+  "../data/nhc100/avb.dat"    u ($1/N + hbin):($5*N) w l ls 1 t "{/Arial-Italic Q}_1 = 100", \
+  "../data/nhc300/avb.dat"    u ($1/N + hbin):($5*N) w l ls 2 t "{/Arial-Italic Q}_1 = 300", \
+  "../data/nhc1000/avb.dat"   u ($1/N + hbin):($5*N) w l ls 3 t "{/Arial-Italic Q}_1 = 1000", \
+  "../data/nhc300bad/avb.dat" u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified"
 
 
-set title "Nose-Hoover, {/Arial-Italic Q} = 10"
+#  "../data/nh300/avb.dat" u ($1/N + hbin):($5*N) w l ls 4 t "NH, {/Arial-Italic Q} = 300"
+
+set origin 0., 0.
+
+
+set title "Nose-Hoover chain, {/Arial-Italic Q} = 10"
 set key width -2
 
-plot [][0:0.3] \
-  "../data/nh10d.002/avb.dat" u ($1/N + hbin):($5*N)  w l ls 1 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.002", \
-  "../data/nh10d.0005/avb.dat" u ($1/N + hbin):($5*N) w l ls 2 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.0005", \
-  "../data/nh10d.0001/avb.dat" u ($1/N + hbin):($5*N) w l ls 3 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.0001" 
+plot [][0:0.35] \
+  "../data/nhc10d.002/avb.dat"  u ($1/N + hbin):($5*N) w l ls 1 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.002", \
+  "../data/nhc10d.0005/avb.dat" u ($1/N + hbin):($5*N) w l ls 2 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.0005", \
+  "../data/nhc10d.0001/avb.dat" u ($1/N + hbin):($5*N) w l ls 3 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.0001" 
 
 
-set origin 0.6667, 0.5
+set origin 0.3333, 0.0
 
 set title "MC velocity-rescaling"
 
@@ -112,14 +116,15 @@ set y2tics 20 font tcfont offset -0.5, 0
 set y2range [0:80]
 set rmargin 2.5
 
-set key width -3
+set key width -9
 
 plot [][0:0.5] \
   "../data/mcx1/avb.dat"     u ($1/N + hbin):($5*N)  w l ls 1 t "{/Symbol-Oblique D} = 1.0", \
   "../data/mcx.3/avb.dat"    u ($1/N + hbin):($5*N)  w l ls 2 t "{/Symbol-Oblique D} = 0.3", \
   "../data/mcx.1/avb.dat"    u ($1/N + hbin):($5*N)  w l ls 3 t "{/Symbol-Oblique D} = 0.1", \
-  "../data/mcx.3rat/avb.dat" u ($1/N + hbin):($5*N)  w l ls 5 t "YdP", \
-  "../data/mcx.3rat/avb.dat" u ($1/N + hbin):($5*N*$6) axes x1y2 w l ls 4 t "YdP, {/Symbol-Oblique r}({/Arial-Italic E}) {/Symbol \341}{/Arial-Italic K}{/Symbol \361}_{/Arial-Italic=8 E}"
+  "../data/mcx.3rat/avb.dat" u ($1/N + hbin):($5*N)  w l ls 5 t '~{/Symbol-Oblique b}{.3\~}{/=6 &.}({/Arial-Italic E}) = {/Arial-Italic N_f} / {/Symbol \341}{/Arial-Italic 2{/=6 &.}K{/=6 &.}}{/Symbol \361}_{/Arial-Italic=8 E}', \
+  "../data/mcx.3rat/avb.dat" u ($1/N + hbin):($5*N*$6) axes x1y2 w l ls 4 \
+      t '~{/Symbol-Oblique b}{.3\~}{/=6 &.}({/Arial-Italic E}), {/Symbol-Oblique r}{/=6 &.}({/Arial-Italic E}) {/Symbol \341}{/Arial-Italic K}{/Symbol \361}_{/Arial-Italic=8 E}'
 
 # "1/{/Symbol-Oblique b}({/Arial-Italic E}) = 2 {/Symbol \341}{/Arial-Italic K}{/Symbol \361}_{/Arial-Italic=8 E} / {/Arial-Italic N_f}", \
 

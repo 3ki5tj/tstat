@@ -68,12 +68,11 @@ static void doargs(int argc, char **argv)
 /* multicanonical molecular dynamics simulation */
 static void domd(lj_t *lj)
 {
-  int t, tacc = 0;
+  int i, t, tacc = 0;
   static av_t ave[1];
   avb_t *avb;
   double tpe = tp, zeta = 0, Emin, Emax;
   real *nhQ, *nhv;
-  int i;
   hist_t *hs;
 
   xnew(nhQ, nhM);
@@ -104,13 +103,17 @@ static void domd(lj_t *lj)
     if (method % 2 == 0) {
       lj->ekin = md_ekin(lj->v, lj->n*lj->d, lj->dof, &lj->tkin);
       GETTPE();
+
       if (method == 102) { /* bad Nose-Hoover */
         md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ, &lj->ekin, &lj->tkin);
+      } else if (method <= 22) { /* good (scaled) Nose-Hoover */
+        md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ*tpe/tp, &lj->ekin, &lj->tkin);
+      } else if (method == 202) { /* bad Nose-Hoover chain */
+        md_nhchain(lj->v, lj->n*lj->d, lj->dof, tpe, 1.f, .5f*mddt, nhv, nhQ, nhM, &lj->ekin, &lj->tkin);
       } else if (method == 32) { /* Nose-Hoover chain */
         md_nhchain(lj->v, lj->n*lj->d, lj->dof, tp, tp/tpe, .5f*mddt, nhv, nhQ, nhM, &lj->ekin, &lj->tkin);
-      } else { /* good (scaled) Nose-Hoover */
-        md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ*tpe/tp, &lj->ekin, &lj->tkin);
       }
+
     }
     
     if (method == 22) {
@@ -133,18 +136,25 @@ static void domd(lj_t *lj)
     } else if (method == 10){ /* sampling the kinetic energy, exact */
       tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d, lj->dof, 
         thermdt, lj->epots, &lj->ekin, &lj->tkin);
+
     } else if (method == 1) { /* velocity rescaling (simple) */
       md_vrescale(lj->v, lj->n * lj->d, lj->dof, tpe, thermdt/tpe, &lj->ekin, &lj->tkin);
     } else if (method == 11) { /* velocity rescaling (exact) */
       md_vrescalex(lj->v, lj->n * lj->d, lj->dof, tpe, thermdt/tpe, &lj->ekin, &lj->tkin);
     } else if (method == 101) { /* wrong velocity rescaling */
       md_vrescalex(lj->v, lj->n * lj->d, lj->dof, tpe, thermdt, &lj->ekin, &lj->tkin);
+
+
     } else if (method == 2 || method == 22) { /* Nose-Hoover */
       md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ*tpe/tp, &lj->ekin, &lj->tkin);
-    } else if (method == 12) { /* wrong Nose-Hoover */
+    } else if (method == 102) { /* wrong Nose-Hoover */
       md_hoover(lj->v, lj->n*lj->d, lj->dof, tpe, .5f*mddt, &zeta, hooverQ, &lj->ekin, &lj->tkin);
     } else if (method == 32) { /* Nose-Hoover chain */
       md_nhchain(lj->v, lj->n*lj->d, lj->dof, tp, tp/tpe, .5f*mddt, nhv, nhQ, nhM, &lj->ekin, &lj->tkin);
+    } else if (method == 202) { /* wrong Nose-Hoover chain */
+      md_nhchain(lj->v, lj->n*lj->d, lj->dof, tpe, 1.f, .5f*mddt, nhv, nhQ, nhM, &lj->ekin, &lj->tkin);
+
+
     } else if (method % 10 == 3) { /* Andersen */
       if (method == 23) { /* exact Andersen */
         tacc += avb_mcandersen(avb, lj->v, lj->n, lj->d, lj->dof, 
@@ -153,6 +163,8 @@ static void domd(lj_t *lj)
         if (rnd0() < tpmin/tpe || method == 13) /* 13: wrong Andersen thermostat */
           md_andersen(lj->v, lj->n, lj->d, tpe);
       }
+
+
     } else if (method == 4) { /* Langevin equation */
       md_langevin(lj->v, lj->n, lj->d, tpe, thermdt/tpe);
     } else if (method == 14) { /* wrong langevin dynamics */

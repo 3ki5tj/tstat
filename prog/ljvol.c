@@ -24,8 +24,9 @@ real baroamp = (real) 0.05; /* step size for changing the volume in MC-stat */
 int barofreq = 1; /* frequency for Monte-Carlo barostat */
 int ensexp = 2; /* ensemble is defined as dV / V^ensexp */
 real dlnvmax = (real) 0.1; /* maximal percentage in a Langevin volumn move */
-real nhQ = 300; /* mass for the Nose-Hoover thermostat */
-real nhW = 300; /* mass for the Nose-Hoover barostat */
+real hooverQ = 300; /* mass for the Nose-Hoover thermostat */
+real hooverW = 300; /* mass for the Nose-Hoover barostat */
+int  nhM = 5;
 real zeta0 = 1.0f; /* damping for the full Langevin barostat */
 int nsteps = 10000000;
 int method = 10;  /* thermostat method */
@@ -46,13 +47,14 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-1", "%d", &nsteps,   "number of simulation steps");
   argopt_add(ao, "-d", "%r", &mddt,     "time step for molecular dynamics");
   argopt_add(ao, "-q", "%r", &thermdt,  "time step for vrescaling thermostat");
-  argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: p-langevin; 2: Nose-Hoover");
+  argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: p-langevin; 2: Nose-Hoover (12: chain)");
   argopt_add(ao, "-a", "%r", &baroamp,  "amplitude for change volume by MC");
   argopt_add(ao, "-f", "%d", &barofreq, "mc change vol. every this # of steps");
   argopt_add(ao, "-b", "%r", &barodt,   "step size for changing volume by Langevin");
   argopt_add(ao, "-x", "%d", &ensexp,   "ensemble exponent");
-  argopt_add(ao, "-Q", "%r", &nhQ,      "mass for the Nose-Hoover thermostat");
-  argopt_add(ao, "-W", "%r", &nhW,      "mass for the Nose-Hoover (full Langevin) barostat");
+  argopt_add(ao, "-Q", "%r", &hooverQ,  "mass for the Nose-Hoover thermostat");
+  argopt_add(ao, "-W", "%r", &hooverW,  "mass for the Nose-Hoover (full Langevin) barostat");
+  argopt_add(ao, "-R", "%d", &nhM,      "number of Nose-Hoover chain variables");  
   argopt_add(ao, "-Z", "%r", &zeta0,    "damping for full Langevin barostat");
   argopt_add(ao, "--every", "%d", &nevery,   "print message every this # of steps");
   argopt_add(ao, "--report", "%d", &nreport, "save data every this # of steps");   
@@ -103,16 +105,24 @@ INLINE int mcprescaleX(avp_t *avp, lj_t *lj, real baroamp, real tp)
 /* molecular dynamics simulation */
 static void domd(lj_t *lj)
 {
-  int t, pacc = 0, ptot = 0, tacc = 0;
+  int i, t, pacc = 0, ptot = 0, tacc = 0;
   static av_t avpr[1], avv[1];
   avp_t *avp;
   real pr, prv, eta = 0, zeta = zeta0, Vmin, Vmax;
+  real *nhQ, *nhv;
   hist_t *hs;
 
   avp = avp_open(rhomin, rhomax, rhodel, N, lj->dof, ensexp, pressure, 100.0);
   Vmin = N / avp->rhomax;
   Vmax = N / avp->rhomin;
   printf("%d bins\n", avp->n);
+
+  xnew(nhQ, nhM);
+  xnew(nhv, nhM);
+  for (i = 0; i < nhM; i++) {
+    nhQ[i] = (i == 0 ? hooverQ : 1.f);
+    nhv[i] = (real) ( sqrt(tp/nhQ[i]) * grand0() );
+  }
 
   /* histogram for the potential energy */
   hs = hs_open(1, 0.0, 2.0*N/rhomin, 1.0);
@@ -127,10 +137,12 @@ static void domd(lj_t *lj)
     if (method % 10 == 2 || method == 11) { /* Nose-Hoover or full Langevin*/
       lj->ekin = md_ekin(lj->v, lj->n*lj->d, lj->dof, &lj->tkin);
       GETPRV();
-      if (method % 10 == 2) {
-        lj_hoovertp(lj, .5f*mddt, tp, prv, &zeta, &eta, nhQ, nhW, ensexp);
+      if (method == 2) {
+        lj_hoovertp(lj, .5f*mddt, tp, prv, &zeta, &eta, hooverQ, hooverW, ensexp);
+      } else if (method == 12) {
+        lj_nhchaintp(lj, .5f*mddt, tp, prv, nhv, &eta, nhQ, nhM, hooverW, ensexp);
       } else {
-        lj_langtp(lj, .5f*mddt, tp, prv, zeta, &eta, nhW, ensexp);
+        lj_langtp(lj, .5f*mddt, tp, prv, zeta, &eta, hooverW, ensexp);
       }
     }
 
@@ -159,9 +171,11 @@ static void domd(lj_t *lj)
     } else if (method == 1) { /* position Langevin */
       lj_prescale(lj, barodt, tp, prv, Vmin, Vmax, dlnvmax, ensexp);
     } else if (method == 11) { /* full Langevin */ 
-      lj_langtp(lj, .5f*mddt, tp, prv, zeta, &eta, nhW, ensexp);
-    } else if (method % 10 == 2) { /* Nose-Hoover */
-      lj_hoovertp(lj, .5f*mddt, tp, prv, &zeta, &eta, nhQ, nhW, ensexp);
+      lj_langtp(lj, .5f*mddt, tp, prv, zeta, &eta, hooverW, ensexp);
+    } else if (method == 2) { /* Nose-Hoover */
+      lj_hoovertp(lj, .5f*mddt, tp, prv, &zeta, &eta, hooverQ, hooverW, ensexp);
+    } else if (method == 12) { /* Nose-Hoover chain */
+      lj_nhchaintp(lj, .5f*mddt, tp, prv, nhv, &eta, nhQ, nhM, hooverW, ensexp);
     }
 
     if (method % 10 != 2) /* unless for Nose-Hoover, T/P-stats are indep. */
@@ -182,6 +196,7 @@ static void domd(lj_t *lj)
   }
   avp_close(avp);
   hs_close(hs);
+  free(nhQ); free(nhv);
 }
 
 int main(int argc, char **argv)
