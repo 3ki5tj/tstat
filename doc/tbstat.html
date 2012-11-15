@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>Multicanonical MD by a variable-temperature thermostat and variable-pressure barostat</title>
+<script type="text/javascript" src="default.js"></script>
+<link href="default.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<h1>Multicanonical MD by a variable-temperature thermostat</h1>
+
+<p> The code is an enhanced sampling method for
+    a flat-energy-distribution, 
+    or
+    a flat-density-distribution,
+    molecular dynamics simulation.
+
+<hr>
+<ul>
+<li><a href="#what">Description</a></li>
+<li><a href="#code">Source code and usage</a></li>
+<li><a href="#prog">Programs</a></li>
+<li><a href="#feedback">Feedback</a></li>
+</ul>
+<hr>
+
+<h2><a name="what"></a>Description</h2>
+
+<p> Molecular dynamics (MD) is a useful tool in studying complex molecular systems.
+    A regular MD simply follows Newton’s equation,
+    which conserves the total energy E and thus generates configurations in a microcanonical ensemble.
+    We can, however, modify the equation of motion by an artificial thermostat to sample a different distribution, 
+    in which the total energy fluctuates, such as the canonical distribution.
+  
+<p> For a system with high energy barriers,
+    the limited exploration of the energy landscape in the canonical distribution is insufficient.
+    A multicanonical ensemble, in which the energy is broadly sampled, is more suitable.
+    The construction of the multicanonical ensemble is nontrivial,
+    for the flat energy distribution requires the inverse of the unknown density of states, 1/&Omega;(<i>E</i>),
+    as the sampling weight.
+
+<p> We here pursue the construction of multicanonical MD
+    by using a variable temperature equal to <i>&beta;</i>(<i>E</i>) = <i>d</i> log &Omega;(<i>E</i>) / <i>dE</i>.
+    We describe several thermostats to set this temperature.
+    The method is built on a previous Monte Carlo method by Yan and de Pablo.
+    Here the sampling along the total energy is directly incorporated into the thermostat for the MD simulation.
+
+<hr>
+<h2><a name="code"></a>Source code and usage</h2>
+
+<p>The source code is contained in <a href="tbstat.zip">tbstat.zip</a>.
+   We assume a Linux environment.  To use the package,
+
+<ul>
+<li><b>Unzip.</b> Place the package in an empty directory, and type:<br> 
+      &nbsp;&nbsp;&nbsp;&nbsp;<code>unzip tbstat.zip</code><br>
+    Modern Linux and Windows also have native unzipping functionality.
+
+<li><b>Compile.</b>  Type<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<code>make</code><br>
+    If this doesn't work, you can compile individual .c files manually, e.g., for GCC, type<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<code>gcc ljmd.c -o ljmd -lm</code><br>
+    For Visual C++, type<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<code>cl ljmd.c</code><br>
+    and the output should be "ljmd.exe".
+
+<li><b>Run.</b> Type the program you want to run, e.g.,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<code>./ljmd</code><br>
+    For help, use the <code>-h</code> option:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<code>./ljmd -h</code><br>
+    See also the source code for advanced options.
+
+<li><b>Modify.</b> To apply the method to other systems, 
+    you can use <code>ljmd.c</code> or <code>gomd.c</code> as a template to start with.
+        
+
+</ul>
+
+<hr>
+<h2><a name="prog"></a>Programs</h2>
+
+<table border="1">
+<tr>
+<th>Program
+<th>Description
+<tr>
+<td>ljmd
+<td>Flat-energy-distribution simulation on a Lennard-Jones system.
+<tr>
+<td>ljvol
+<td>Flat-volume-distribution simulation on a Lennard-Jones system.
+<tr>
+<td>gomd
+<td>Flat-energy-distribution simulation on a structure-based model of proteins.
+<tr>
+<td>enerw
+<td>Energy-reweighting program for the output of ljmd and gomd.
+<tr>
+<td>volrw
+<td>Volume-reweighting program for the output of ljvol.
+</table>
+
+<p>The output of <code>ljmd</code> is "avb.dat" (energy histogram, temperature, etc.)
+  and "epot.his" (potential energy histogram).
+  To check if a flat energy distribution is reached,
+  you can type the following in <a href="http://www.gnuplot.info/">Gnuplot</a><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<code>plot [][0:] "avb.dat" u 1:5 w l</code>
+
+<p>The output of <code>gomd</code> is similar, but the name is "goavb.dat" instead of "avb.dat".
+
+<p>The output of <code>ljvol</code> is "avp.dat" (density histogram, pressure, etc.)
+  and "vol.his" (volume histogram).
+  To check if a flat density distribution is reached, type<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<code>plot [][0:] "avp.dat" u 1:5 w l</code><br>
+  in Gnuplot.
+
+
+<hr>
+<h2><a name="feedback"></a>Feedback</h2>
+
+<p>tbstat.zip is an unsupported software. Please send questions and comments to
+
+<p> Professor Michael W. Deem
+<br>Rice University
+<br>Department of Physics and Astronomy
+<br>6100 Main Street - MS61
+<br>Houston, TX 77005-1892 USA
+<br>E-mail: mwdeem@rice.edu
+<br>
+
+</body>
+</html>
+

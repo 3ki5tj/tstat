@@ -30,8 +30,8 @@ dx = 0.01
 dy = 0.03
 
 set style line 1 lc rgb "#ff0044" lt 1 
-set style line 2 lc rgb "#22cc00" lt 2
-set style line 3 lc rgb "#2200cc" lt 4
+set style line 2 lc rgb "#22cc00" lt 1 
+set style line 3 lc rgb "#2200cc" lt 1 
 
 
 set label 1 "(a)" at screen dx, 1-dy
@@ -70,10 +70,10 @@ set y2range[:15]
 
 set rmargin 5.5
 
-set label "{/Arial-Italic p}^* = 0.0696" at 0.42, 0.09 font "Arial, 12"
+set label "{/Arial-Italic p}^* = 0.0696" at 0.43, 0.09 font "Arial, 12"
 sh = 0.2
 plot [.05:.7][] \
-  0.0696 w l lt 4 not, \
+  0.0696 w l lt 2 not, \
   "../data/ljvolnhc1/avp.dat"       u ($1 + hbin):($2) w l ls 1 t "Nose-Hoover Chain", \
   "../data/ljvollangf300/avp.dat"   u ($1 + hbin):($2) w l ls 2 t "Langevin", \
   "../data/ljvolmcb/avp.dat"        u ($1 + hbin):($2) w l ls 3 t "Monte-Carlo", \
