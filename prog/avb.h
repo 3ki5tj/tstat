@@ -178,7 +178,7 @@ INLINE int avb_write(avb_t *avb, const char *fn)
 }
 
 /* change the kinetic energy by a Monte-Carlo move (exact) */
-INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd, int dof,
+INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
   real amp, real ep, real *ekin, real *tkin)
 {
   int i;
@@ -197,7 +197,7 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd, int dof,
     return 0;
 */
   dS = avb_getdS(avb, etot1, etot2);
-  r = dS - .5*dof*(logek2 - logek1);
+  r = dS - .5*avb->dof*(logek2 - logek1);
   
   if (r <= 0 || rnd0() < exp(-r)) {
     s = (real) sqrt(ek2/ek1);
@@ -212,7 +212,7 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd, int dof,
 }
 
 /* Exact Andersen theromstat */
-INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d, int dof,
+INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d,
   real ep, real *ekin, real *tkin)
 {
   int i, j;
@@ -240,7 +240,7 @@ INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d, int dof,
     for (j = 0; j < d; j++)
       v[i*d + j] = vi[j];
     *ekin = ek2;
-    *tkin = 2.*ek2/dof; 
+    *tkin = 2.*ek2/avb->dof; 
     return 1;
   } else {
     return 0;

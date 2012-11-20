@@ -134,7 +134,7 @@ static void domd(lj_t *lj)
     if (method == 0) { /* sampling the kinetic energy */
       tacc += lj_mcvrescale(lj, tpe, thermdt);
     } else if (method == 10){ /* sampling the kinetic energy, exact */
-      tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d, lj->dof, 
+      tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d,
         thermdt, lj->epots, &lj->ekin, &lj->tkin);
 
     } else if (method == 1) { /* velocity rescaling (simple) */
@@ -157,7 +157,7 @@ static void domd(lj_t *lj)
 
     } else if (method % 10 == 3) { /* Andersen */
       if (method == 23) { /* exact Andersen */
-        tacc += avb_mcandersen(avb, lj->v, lj->n, lj->d, lj->dof, 
+        tacc += avb_mcandersen(avb, lj->v, lj->n, lj->d, 
           lj->epots, &lj->ekin, &lj->tkin);
       } else { /* approximate Andersen */ 
         if (rnd0() < tpmin/tpe || method == 13) /* 13: wrong Andersen thermostat */

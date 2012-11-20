@@ -111,7 +111,7 @@ static void domc(lj_t *lj)
     }
     
     /* exact MC sampling */
-    tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d, lj->dof,
+    tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d,
         thermdt, lj->epot, &lj->ekin, &lj->tkin);
     lj->etot = lj->ekin + lj->epot;
 

@@ -94,7 +94,7 @@ static void domd(void)
     tpe = 1.0/avb_getbet(avb, w->etot);
    
     if (method == 0) { 
-      tacc += avb_mcvrescale(avb, (real *) w->v, w->n * 3, w->dof, 
+      tacc += avb_mcvrescale(avb, (real *) w->v, w->n * 3, 
           thermdt, w->epot, &w->ekin, &w->tkin);
     } else {
       md_vrescale3d(w->v, w->n, w->dof, tpe, thermdt, &w->ekin, &w->tkin);
