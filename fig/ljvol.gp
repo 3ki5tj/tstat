@@ -79,7 +79,7 @@ plot [.05:.7][] \
   "../data/ljvolmcb/avp.dat"        u ($1 + hbin):($2) w l ls 3 t "Monte-Carlo", \
   "../data/ljvolnhc1/fe.dat"        u ($1):($2 + 0.069625*N/$1 - 139.5 + sh)  axes x1y2 w l ls 1 lw 3 not, \
   "../data/ljvollangf300/fe.dat"    u ($1):($2 + 0.069500*N/$1 - 139.25 + sh) axes x1y2 w l ls 2 lw 3 not, \
-  "../data/ljvolmcb/fe.dat"         u ($1):($2 + 0.069666*N/$1 - 139.5 + sh)  axes x1y2 w l ls 3 lw 3 not
+  "../data/ljvolmcb/fe.dat"         u ($1):($2 + 0.069666*N/$1 - 139.5 + sh)  axes x1y2 w l ls 3 lw 2.5 not
 
 #  "../data/ljvollangb/avp.dat" u ($1 + hbin):($2) w l ls 2 t "Langevin",
 #  "../data/ljvollangb/fe.dat"   u ($1):($2 + 0.069616*N/$1 - 139.45 + sh) axes x1y2 w l ls 2 not,
