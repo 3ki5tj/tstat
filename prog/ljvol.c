@@ -65,6 +65,40 @@ static void doargs(int argc, char **argv)
   argopt_close(ao);
 }
 
+/* position Langevin barostat
+ * old version, to be replaced by lj_langtp0
+ * the ideal-gas part of the pressure is computed as \sum p^2/m / V
+ * the scaling is r = r*s, p = p/s;
+ * set cutoff to half of the box */
+INLINE int lj_prescale(lj_t *lj, real barodt, real tp, real pext,
+    real vmin, real vmax, real dlnvmax, real ensexp)
+{
+  int i;
+  real pint, amp, vn, lo = lj->l, s, dlnv;
+
+  /* compute the internal pressure */
+  /* note only with half-box cutoff, the formula is accurate */
+  pint = (lj->vir + 2.f * lj->ekin)/ (lj->d * lj->vol) + lj->p_tail;
+
+  amp = (real) sqrt(2.f*barodt);
+  dlnv = ((pint - pext)*lj->vol/tp + 1 - ensexp)*barodt + amp*grand0();
+  /* avoid changing dlnv over 10% */
+  if (dlnv < -dlnvmax) dlnv = -dlnvmax;
+  else if (dlnv > dlnvmax) dlnv = dlnvmax;
+  vn = log(lj->vol) + dlnv;
+  vn = exp(vn);
+  if (vn < vmin || vn >= vmax) return 0;
+
+  lj_setrho(lj, lj->n/vn);
+  lj_force(lj);
+  s = lo/lj->l;
+  for (i = 0; i < lj->d * lj->n; i++) lj->v[i] *= s;
+  lj->ekin *= s*s;
+  lj->tkin *= s*s;
+  return 1;
+}
+
+
 /* exact entropic Monte Carlo like move
  * r = r*s, p = p/s; */
 INLINE int mcprescaleX(avp_t *avp, lj_t *lj, real baroamp, real tp)
@@ -146,7 +180,7 @@ static void domd(lj_t *lj)
       }
     }
 
-    if (method % 10 == 2 || method == 11) { /* Nose-Hoover */
+    if (method % 10 == 2 || method == 11) { /* Nose-Hoover or full Langevin */
       lj_vv_hoovertp(lj, mddt, eta);
     } else {
       lj_vv(lj, mddt);
@@ -170,7 +204,7 @@ static void domd(lj_t *lj)
       }
     } else if (method == 1) { /* position Langevin */
       lj_prescale(lj, barodt, tp, prv, Vmin, Vmax, dlnvmax, ensexp);
-    } else if (method == 11) { /* full Langevin */ 
+    } else if (method == 11) { /* full Langevin */
       lj_langtp(lj, .5f*mddt, tp, prv, zeta, &eta, hooverW, ensexp);
     } else if (method == 2) { /* Nose-Hoover */
       lj_hoovertp(lj, .5f*mddt, tp, prv, &zeta, &eta, hooverQ, hooverW, ensexp);
