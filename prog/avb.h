@@ -195,7 +195,7 @@ INLINE double avb_getbetcor(avb_t *avb, double etot)
   cor /= avb->edel;
   /* we confine the maximal correction
    * strictly, shouldn't do this, but more stable this way */
-  cor = dblconfine(cor, -bet1*.1, bet1*.1);
+  cor = dblconfine(cor, -bet1*.3, bet1*.3);
   return cor;
 }
 
@@ -288,7 +288,7 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
   real amp, real ep, real *ekin, real *tkin,
   real etotmin, real etotmax, int epcor)
 {
-  int i;
+  int i, acc = 0;
   real ek1 = *ekin, s;
   double logek1, logek2, ek2, r, dS, dSc = 0, etot1, etot2;
 
@@ -300,15 +300,23 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
 
   /* causes troubles in LJ with the following limitation
    * but might be okay in other cases */
-  if (etotmin < etotmax
-   && (etot1 > etotmin && etot1 < etotmax)
-   && (etot2 > etotmax || etot2 < etotmin))
-    return 0;
+  if (etotmin < etotmax) {
+    if ( (etot1 > etotmin && etot1 < etotmax) /* previously in range */
+      && (etot2 > etotmax || etot2 < etotmin)) { /* now not */
+      return 0;
+    } else if (etot1 < etotmin) {
+      acc = (etot2 > etot1);
+    } else if (etot1 > etotmin) {
+      acc = (etot2 < etot1);
+    }
+    if (acc) goto ACC;
+  }
 
   dS = avb_getdS(avb, etot1, etot2, epcor ? &dSc : 0);
   r = dS - .5*avb->dof*(logek2 - logek1);
   
   if (r <= 0 || rnd0() < exp(-r)) {
+ACC:    
     s = (real) sqrt(ek2/ek1);
     for (i = 0; i < nd; i++)
       v[i] *= s;

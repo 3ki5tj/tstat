@@ -71,6 +71,7 @@ ERR:
   return NULL;
 }
 
+/* compute the density of energy states */
 static void outpute(avb_t *avb, const char *fn)
 {
   FILE *fp;
@@ -103,7 +104,8 @@ static void outpute(avb_t *avb, const char *fn)
   free(en);
 }
 
-/* get the aggregate weight for a potential energy u */
+/* get the aggregate weight for a potential energy u
+ * using incomplete gamma function */
 INLINE double avb_getlnwtot(avb_t *avb, double u)
 {
   int i;
@@ -152,7 +154,8 @@ INLINE double avb_getlnwtot(avb_t *avb, double u)
   return lnw;
 }
 
-/* get the aggregate weight for a potential energy u (backup routine) */
+/* get the aggregate weight for a potential energy u
+ * (backup routine) approximate */
 INLINE double avb_getlnwtot0(avb_t *avb, double u)
 {
   int i;
@@ -171,7 +174,7 @@ INLINE double avb_getlnwtot0(avb_t *avb, double u)
   return lnw;
 }
 
-
+/* write the density of potential-energy states */
 static void outputu(avb_t *avb, hist_t *hs, const char *fn)
 {
   FILE *fp;
@@ -212,13 +215,16 @@ int main(int argc, char **argv)
   
   doargs(argc, argv);
 
-  die_if ((avb = avb_load(fnavb)) == NULL, "cannot load avb from %s\n", fnavb);
+  die_if ((avb = avb_load(fnavb)) == NULL,
+      "cannot load avb from %s\n", fnavb);
   histgetinfo(fnhis, &row, &vmin, &vmax, &vdel, &ver, &fflags);
   hs = hs_open(1, vmin, vmax, vdel);
-  die_if (hs_load(hs, fnhis, HIST_VERBOSE) != 0, "cannot load histogram from %s\n", fnhis);
+  die_if (hs_load(hs, fnhis, HIST_VERBOSE) != 0,
+      "cannot load histogram from %s\n", fnhis);
   outpute(avb, "se.dat");
   outputu(avb, hs, "su.dat");
   hs_close(hs);
   avb_close(avb);
   return 0;
 }
+

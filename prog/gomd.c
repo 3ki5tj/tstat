@@ -18,8 +18,9 @@ real rcc = 7.f;
 int nsteps = 1000000000;
 real mddt = 0.002f;
 real tp = 1.5f;
-real thermdt = 0.05f;
-int method = 1;
+
+real thermdt = 0.5f; /* use 0.01~0.05 for method 1, ~0.5 for method 0 */
+int method = 0;
 
 char *fnpdb = "pdb/1VII.pdb";
 real emin = 0.f;
