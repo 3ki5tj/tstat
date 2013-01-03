@@ -177,9 +177,11 @@ INLINE int avb_write(avb_t *avb, const char *fn)
   return 0;
 }
 
-/* change the kinetic energy by a Monte-Carlo move (exact) */
+/* change the kinetic energy by a Monte-Carlo move (exact)
+ * to avoid the hard total energy limits set etotmin >= etotmax */
 INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
-  real amp, real ep, real *ekin, real *tkin)
+  real amp, real ep, real *ekin, real *tkin,
+  real etotmin, real etotmax)
 {
   int i;
   real ek1 = *ekin, s;
@@ -190,12 +192,13 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
   ek2 = exp(logek2);
   etot1 = ek1 + ep;
   etot2 = ek2 + ep;
-  /* causes troubles in LJ with the following limitation */
-/*
-  if ((etot1 > etotmin && etot1 < etotmax)
+  /* causes troubles in LJ with the following limitation
+   * but might be okay in other cases */
+  if (etotmin < etotmax &&
+      (etot1 > etotmin && etot1 < etotmax)
    && (etot2 > etotmax || etot2 < etotmin))
     return 0;
-*/
+
   dS = avb_getdS(avb, etot1, etot2);
   r = dS - .5*avb->dof*(logek2 - logek1);
   

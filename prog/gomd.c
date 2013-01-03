@@ -31,7 +31,7 @@ real vmax = 300.f;
 real vdel = 0.1f;
 int nevery = 100000;
 int nreport = 2000000;
-
+int restrain = 0;
 
 /* handle input arguments */
 static void doargs(int argc, char **argv)
@@ -44,6 +44,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-q", "%r", &thermdt,  "time step for mc-vrescaling thermostat");
   argopt_add(ao, "-c", "%r", &rcc,      "cutoff distance for selecting contacts");
   argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: vrescale");  
+  argopt_add(ao, "-R", "%b", &restrain, "hard restrain energy levels");
   argopt_add(ao, "--emin", "%r", &emin,     "minimal total energy");
   argopt_add(ao, "--emax", "%r", &emax,     "maximal total energy");
   argopt_add(ao, "--edel", "%r", &edel,     "total energy interval");
@@ -66,7 +67,7 @@ static void domd(void)
   cago_t *w;
   int it, tacc = 0;
   static av_t avep[1], avet[1];
-  real tpe;
+  real tpe, etmin, etmax;
   avb_t *avb;
   hist_t *hs;
 
@@ -92,10 +93,15 @@ static void domd(void)
     hs_add1(hs, 0, w->epot, 1.0, HIST_VERBOSE); /* add to histogram */
 
     tpe = 1.0/avb_getbet(avb, w->etot);
-   
+    if (restrain) {
+      etmin = emin;
+      etmax = emax;
+    } else {
+      etmin = etmax = 0;
+    }
     if (method == 0) { 
       tacc += avb_mcvrescale(avb, (real *) w->v, w->n * 3, 
-          thermdt, w->epot, &w->ekin, &w->tkin);
+          thermdt, w->epot, &w->ekin, &w->tkin, etmin, etmax);
     } else {
       md_vrescale3d(w->v, w->n, w->dof, tpe, thermdt, &w->ekin, &w->tkin);
     }

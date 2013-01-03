@@ -21,6 +21,7 @@ int usesw = 0;
 real rshift = 2.0f;
 real mcamp = 0.1f;
 int betmeth = 0;
+int restrain = 0;
 real emin = -4.f;
 real emax =  2.f;
 real edel = 0.1f;
@@ -46,6 +47,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-Q", "%r", &hooverQ,  "mass of the thermostat");
   argopt_add(ao, "-w", "%b", &usesw,    "use switched potential");
   argopt_add(ao, "-s", "%r", &rshift,   "potential shift distance");
+  argopt_add(ao, "-R", "%b", &restrain, "restrain the potential energy");
   argopt_add(ao, "--emin", "%r", &emin,     "minimal total energy");
   argopt_add(ao, "--emax", "%r", &emax,     "maximal total energy");
   argopt_add(ao, "--edel", "%r", &edel,     "total energy interval");
@@ -84,7 +86,7 @@ INLINE int lj_microcan(lj_t *lj, real amp)
 static void domc(lj_t *lj)
 {
   int t, tacc = 0, acc = 0;
-  double Emin, Emax;
+  double Emin, Emax, etmin, etmax;
   static av_t ave[1];
   avb_t *avb;
   hist_t *hs;
@@ -110,9 +112,16 @@ static void domc(lj_t *lj)
       avb_addbetrat(avb, lj->etot, .5*lj->dof/lj->ekin, lj->ekin, 0.f);
     }
     
+    if (restrain) {
+      etmin = emin;
+      etmax = emax;
+    } else {
+      etmin = etmax = 0;
+    }
+
     /* exact MC sampling */
     tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d,
-        thermdt, lj->epot, &lj->ekin, &lj->tkin);
+        thermdt, lj->epot, &lj->ekin, &lj->tkin, etmin, etmax);
     lj->etot = lj->ekin + lj->epot;
 
     av_add(ave, lj->etot);
