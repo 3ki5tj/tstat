@@ -22,6 +22,7 @@ real rshift = 2.0f;
 real mcamp = 0.1f;
 int betmeth = 0;
 int restrain = 0;
+int epcorr = 0;
 real emin = -4.f;
 real emax =  2.f;
 real edel = 0.1f;
@@ -48,6 +49,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-w", "%b", &usesw,    "use switched potential");
   argopt_add(ao, "-s", "%r", &rshift,   "potential shift distance");
   argopt_add(ao, "-R", "%b", &restrain, "restrain the potential energy");
+  argopt_add(ao, "-C", "%b", &epcorr,   "aim at a flat potential-energy histogram");
   argopt_add(ao, "--emin", "%r", &emin,     "minimal total energy");
   argopt_add(ao, "--emax", "%r", &emax,     "maximal total energy");
   argopt_add(ao, "--edel", "%r", &edel,     "total energy interval");
@@ -91,7 +93,7 @@ static void domc(lj_t *lj)
   avb_t *avb;
   hist_t *hs;
 
-  lj->dof = 3*lj->n;
+  lj->dof = lj->d * lj->n;
 
   Emin = emin*N;
   Emax = emax*N;
@@ -121,7 +123,7 @@ static void domc(lj_t *lj)
 
     /* exact MC sampling */
     tacc += avb_mcvrescale(avb, lj->v, lj->n*lj->d,
-        thermdt, lj->epot, &lj->ekin, &lj->tkin, etmin, etmax);
+        thermdt, lj->epot, &lj->ekin, &lj->tkin, etmin, etmax, epcorr);
     lj->etot = lj->ekin + lj->epot;
 
     av_add(ave, lj->etot);
@@ -130,6 +132,7 @@ static void domc(lj_t *lj)
       t, lj->epot/lj->n, lj->ekin/lj->n, lj->etot/lj->n, 1.f/lj->tkin, 1.0*tacc/t, 1.0*acc/t);
 
     if (t % nreport == 0) {
+      fprintf(stderr, "step %d, writing report\n", t);
       avb_write(avb, "avb.dat");
       hs_save(hs, "epot.his", HIST_ADDAHALF);
     }

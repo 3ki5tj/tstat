@@ -10,6 +10,10 @@ ljmd: avb.h
 
 lju: avb.h
 
+gomd: avb.h
+
+ljmc: avb.h
+
 ljvol: avp.h
 
 enerw: avb.h
