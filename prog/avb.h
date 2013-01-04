@@ -23,7 +23,7 @@ typedef struct {
   double emin, emax, edel;
   double bet0; /* default temperature */
   int n, dof;
-  av_t *av, *av0, *avu, *avdb, *avdb0;
+  av_t *av, *av0, *avu;
 } avb_t;
 
 INLINE avb_t *avb_open(double emin, double emax, double edel,
@@ -42,14 +42,10 @@ INLINE avb_t *avb_open(double emin, double emax, double edel,
   xnew(avb->av,  avb->n + 1);
   xnew(avb->av0, avb->n + 1);
   xnew(avb->avu, avb->n + 1);
-  xnew(avb->avdb, avb->n + 1);
-  xnew(avb->avdb0, avb->n + 1);
   for (i = 0; i <= avb->n; i++) {
     av_clear( &(avb->av[i]) );
     av_clear( &(avb->av0[i]) );
     av_clear( &(avb->avu[i]) );
-    av_clear( &(avb->avdb[i]) );
-    av_clear( &(avb->avdb0[i]) );
   }
   return avb;
 }
@@ -59,8 +55,6 @@ INLINE void avb_close(avb_t *avb)
   free(avb->av);
   free(avb->av0);
   free(avb->avu);
-  free(avb->avdb);
-  free(avb->avdb0);
   free(avb);
 }
 
@@ -78,8 +72,6 @@ INLINE int avb_add(avb_t *avb, double etot, double ekin, double ngam)
   av_gadd( &(avb->av[i]), fhm1/ekin, ngam);
   av_add( &(avb->av0[i]), fhm1/ekin);
   av_add( &(avb->avu[i]), etot - ekin);
-  av_gadd( &(avb->avdb[i]), fhm1/(ekin*ekin), ngam); 
-  av_add( &(avb->avdb0[i]), fhm1/(ekin*ekin)); 
   return 0;
 }
 
@@ -88,7 +80,6 @@ INLINE int avb_add(avb_t *avb, double etot, double ekin, double ngam)
 INLINE int avb_addbet(avb_t *avb, double etot, double bet, double f2, double ngam)
 {
   int i;
-  real ekin;
 
   if (etot < avb->emin || etot >= avb->emax) return 1;
   i = (int)((etot - avb->emin) / avb->edel);
@@ -97,9 +88,6 @@ INLINE int avb_addbet(avb_t *avb, double etot, double bet, double f2, double nga
   av_gadd( &(avb->av[i]), bet, ngam);
   av_add( &(avb->av0[i]), bet);
   av_add( &(avb->avu[i]), f2);
-  ekin = (.5f*avb->dof - 1)/bet;
-  av_gadd( &(avb->avdb[i]), bet/ekin, ngam);
-  av_add( &(avb->avdb0[i]), bet/ekin);
   return 0;
 }
 
@@ -125,8 +113,7 @@ INLINE int avb_addbetrat(avb_t *avb, double etot, double bet, double f2, double 
 #define AVB_MINDATA2 1000.0 /* for variance etc */
 
 /* we check avu[i].s, because av0[i].s may be weighted
- * in the ratio estiamtor, which does not give the # of visits
- * avdb0[i].s may not be set properly */
+ * in the ratio estiamtor, which does not give the # of visits */
 #define AVB_GETBET(avb, i) ( avb->avu[i].s < AVB_MINDATA ? avb->bet0 : av_getave( &(avb->av[i])) )
 
 /* get the local temperature */
@@ -141,23 +128,33 @@ INLINE double avb_getbet(avb_t *avb, double etot)
   return AVB_GETBET(avb, i);
 }
 
+INLINE int avb_getdude_low(av_t *av, real dof, double *pbet)
+{
+  double bet, bet2, dbde;
+
+  bet = av_getave( av );
+  if (pbet) *pbet = bet;
+  bet2 = av_getvar( av ) + bet * bet;
+  bet2 *= (.5*dof - 2)/(.5*dof - 1 + 1e-16);
+  dbde = bet2 - bet * bet;
+  /* the correction must be positive
+   * TODO: dof/2 or dof/2 - 1? */
+  return dblmax( 1 + (.5*dof - 1)*dbde/(bet*bet), 1e-10 );
+}
+
 /* get the local dU/dE
  * return 0 if successful */
-INLINE int avb_getdUdE(avb_t *avb, double etot, double *dUdE)
+INLINE int avb_getdude(avb_t *avb, double etot, double *dude)
 {
   int i;
-  double bet, dbdE;
   
   if (etot < avb->emin || etot >= avb->emax)
     return 1;
   i = (int)( (etot - avb->emin) / avb->edel );
   die_if(i < 0 || i >= avb->n,
-      "getdUdE: index %d out of range, n %d, etot %g\n", i, avb->n, etot);
+      "getdude: index %d out of range, n %d, etot %g\n", i, avb->n, etot);
   if (avb->avu[i].s < AVB_MINDATA2) return 2;
-  bet = AVB_GETBET(avb, i);
-  dbdE = av_getvar( &(avb->av[i]) ) - av_getave( &(avb->avdb[i]) );
-  /* the correction must be positive */
-  *dUdE = dblmax( 1 + .5*avb->dof*dbdE/(bet*bet), 1e-10 );
+  *dude = avb_getdude_low( &(avb->av[i]), avb->dof, NULL );
   return 0;
 }
 
@@ -165,7 +162,7 @@ INLINE int avb_getdUdE(avb_t *avb, double etot, double *dUdE)
 INLINE double avb_getbetcor(avb_t *avb, double etot)
 {
   int i1, i2;
-  double bet1, bet2, dbde1, dbde2, dude1, dude2, cor;
+  double bet1, dude1, dude2, cor;
   
   if (etot < avb->emin || etot >= avb->emax)
     return 0;
@@ -174,18 +171,13 @@ INLINE double avb_getbetcor(avb_t *avb, double etot)
   if (i1 < 0 || i1 >= avb->n - 1) return 0;
 
   if (avb->avu[i1].s < AVB_MINDATA2) return 0;
-  bet1 = AVB_GETBET(avb, i1);
-  dbde1 = av_getvar( &(avb->av[i1]) ) - av_getave( &(avb->avdb[i1]) );
-  /* the correction must be positive */
-  dude1 = dblmax( 1 + .5*avb->dof*dbde1/(bet1*bet1), 1e-10 );
+  dude1 = avb_getdude_low( &(avb->av[i1]), avb->dof, &bet1);
 
   /* although we can do the thermal averaging
    * we use discrete differentiation, so we need the second bin */
   i2 = i1+1;
   if (avb->avu[i2].s < AVB_MINDATA2) return 0;
-  bet2 = AVB_GETBET(avb, i2);
-  dbde2 = av_getvar( &(avb->av[i2]) ) - av_getave( &(avb->avdb[i2]) );
-  dude2 = dblmax( 1 + .5*avb->dof*dbde2/(bet2*bet2), 1e-10 );
+  dude2 = avb_getdude_low( &(avb->av[i2]), avb->dof, NULL );
 
   /* correction */
   if (dude1 > 0 && dude2 > 0)
@@ -200,22 +192,22 @@ INLINE double avb_getbetcor(avb_t *avb, double etot)
 }
 
 /* get the entropy difference: dS = S(e2) - S(e1)
- * *dScor is a correction intended to get the flat potential-energy histogram
+ * *dscor is a correction intended to get the flat potential-energy histogram
  * but it makes unweighted averaging approximate */ 
-INLINE double avb_getdS(avb_t *avb, double e1, double e2, double *dScor)
+INLINE double avb_getds(avb_t *avb, double e1, double e2, double *dscor)
 {
   int i1, i2, i, sgn = 1, a1, a2;
-  double dS = 0, dude1 = 0, dude2 = 0;
+  double ds = 0, dude1 = 0, dude2 = 0;
  
-  if (dScor) *dScor = 0; /* zero the correction by default */
+  if (dscor) *dscor = 0; /* zero the correction by default */
 
   if (e1 > e2) { sgn = -1; dblswap(e1, e2); }
   if (e2 < avb->emin || e1 >= avb->emax)
     return (e2 - e1) * sgn * avb->bet0;
 
   /* make no correction for E outside of the range */
-  if (e1 < avb->emin) { dS += (avb->emin - e1) * avb->bet0; e1 = avb->emin; }
-  if (e2 >= avb->emax) { dS += (e2 - avb->emax) * avb->bet0; e2 = avb->emax - 1e-8; }
+  if (e1 < avb->emin) { ds += (avb->emin - e1) * avb->bet0; e1 = avb->emin; }
+  if (e2 >= avb->emax) { ds += (e2 - avb->emax) * avb->bet0; e2 = avb->emax - 1e-8; }
   
   i1 = (int)( (e1 - avb->emin) / avb->edel );
   i2 = (int)( (e2 - avb->emin) / avb->edel );
@@ -223,26 +215,26 @@ INLINE double avb_getdS(avb_t *avb, double e1, double e2, double *dScor)
     "i1 %d, i2 %d out of range, n %d, e1 %g, e2 %g\n", i1, i2, avb->n, e1, e2);
 
   if (i1 == i2) {
-    dS += (e2 - e1) * AVB_GETBET(avb, i1);
+    ds += (e2 - e1) * AVB_GETBET(avb, i1);
     /* no correction here */
   } else {
-    dS += ((avb->emin + (i1+1)*avb->edel) - e1) * AVB_GETBET(avb, i1);
-    dS += (e2 - (avb->emin + i2*avb->edel)) * AVB_GETBET(avb, i2);
+    ds += ((avb->emin + (i1+1)*avb->edel) - e1) * AVB_GETBET(avb, i1);
+    ds += (e2 - (avb->emin + i2*avb->edel)) * AVB_GETBET(avb, i2);
     for (i = i1 + 1; i < i2; i++)
-      dS += AVB_GETBET(avb, i) * avb->edel;
+      ds += AVB_GETBET(avb, i) * avb->edel;
 
     /* correction */
-    if (dScor != NULL
-     && avb_getdUdE(avb, e1, &dude1) == 0
-     && avb_getdUdE(avb, e2, &dude2) == 0) {
+    if (dscor != NULL
+     && avb_getdude(avb, e1, &dude1) == 0
+     && avb_getdude(avb, e2, &dude2) == 0) {
       if (dude1 > 0 && dude2 > 0)
-        *dScor = log(dude1/dude2);
+        *dscor = log(dude1/dude2);
       else
-        *dScor = 2.*(dude1 - dude2)/(dude1 + dude2);
-      dS += *dScor;
+        *dscor = 2.*(dude1 - dude2)/(dude1 + dude2);
+      ds += *dscor;
     }
   }
-  return sgn * dS;
+  return sgn * ds;
 }
 
 
@@ -252,7 +244,7 @@ INLINE int avb_write(avb_t *avb, const char *fn)
 {
   int i;
   FILE *fp;
-  double bet, cnt, bet0, cnt0, uav, tot, scal, db, db0, devb, devb0;
+  double bet, cnt, bet0, cnt0, uav, tot, scal, db, db0, devb, devb0, fhm1;
 
   xfopen(fp, fn, "w", return -1);
   /* count the total */
@@ -263,14 +255,15 @@ INLINE int avb_write(avb_t *avb, const char *fn)
   fprintf(fp, "# %d %g %g %g %d %g\n", avb->n, avb->emin, avb->edel,
       tot, avb->dof, avb->bet0);
   
+  fhm1 = .5*avb->dof - 1;
   for (i = 0; i < avb->n; i++) {
     bet = av_getave( &(avb->av[i]) );
     devb = av_getdev( &(avb->av[i]) );
-    db = devb*devb - av_getave( &(avb->avdb[i]) );
+    db = (devb*devb + bet*bet)*(1 - 1./fhm1) - bet*bet;
     cnt = avb->av[i].s;
     bet0 = av_getave( &(avb->av0[i]) );
     devb0 = av_getdev( &(avb->av0[i]) );
-    db0 = devb0*devb0 - av_getave( &(avb->avdb0[i]) );
+    db0 = (devb0*devb0 + bet0*bet0)*(1 - 1./fhm1) - bet0*bet0;
     cnt0 = avb->avu[i].s;
     uav = av_getave( &(avb->avu[i]) );
     fprintf(fp, "%g %g %g %g %g %g %g %g %g %g %g\n",
@@ -290,7 +283,7 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
 {
   int i, acc = 0;
   real ek1 = *ekin, s;
-  double logek1, logek2, ek2, r, dS, dSc = 0, etot1, etot2;
+  double logek1, logek2, ek2, r, ds, dsc = 0, etot1, etot2;
 
   logek1 = log(ek1);
   logek2 = logek1 + amp*(2.f*rnd0() - 1);
@@ -312,8 +305,8 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
     if (acc) goto ACC;
   }
 
-  dS = avb_getdS(avb, etot1, etot2, epcor ? &dSc : 0);
-  r = dS - .5*avb->dof*(logek2 - logek1);
+  ds = avb_getds(avb, etot1, etot2, epcor ? &dsc : 0);
+  r = ds - .5*avb->dof*(logek2 - logek1);
   
   if (r <= 0 || rnd0() < exp(-r)) {
 ACC:    
@@ -335,7 +328,7 @@ INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d,
 {
   int i, j;
   real ek1 = *ekin, ek2, eki1, eki2, vi[3];
-  double r, sqtp, dS, dSc = 0, bet1, bet2, etot1, etot2, lnrose;
+  double r, sqtp, ds, dsc = 0, bet1, bet2, etot1, etot2, lnrose;
 
   i = (int)(rnd0() * n);
   etot1 = ek1 + ep;
@@ -351,8 +344,8 @@ INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d,
   
   bet2 = avb_getbet(avb, etot2);
   lnrose = .5*d*log(bet1/bet2);
-  dS = avb_getdS(avb, etot1, etot2, epcor ? &dSc : 0);
-  r = bet2 * eki1 - bet1 * eki2 + dS + lnrose;
+  ds = avb_getds(avb, etot1, etot2, epcor ? &dsc : 0);
+  r = bet2 * eki1 - bet1 * eki2 + ds + lnrose;
 
   if (r <= 0 || rnd0() < exp(-r)) {
     for (j = 0; j < d; j++)

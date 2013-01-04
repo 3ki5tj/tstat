@@ -30,6 +30,7 @@ real edel = 2.0f;
 real vmin = -300.f;
 real vmax = 300.f;
 real vdel = 0.1f;
+real adpc = 0.f;
 int nevery = 100000;
 int nreport = 2000000;
 int restrain = 0;
@@ -70,7 +71,7 @@ static void domd(void)
   cago_t *w;
   int it, tacc = 0;
   static av_t avep[1], avet[1];
-  real tpe, etmin, etmax;
+  real tpe, etmin, etmax, ngam;
   avb_t *avb;
   hist_t *hs;
 
@@ -92,7 +93,9 @@ static void domd(void)
     w->etot = w->epot + w->ekin;
     //avb_add(avb, w->etot, w->ekin, 0.0);
     cago_rotfit(w, w->x, NULL); /* compute rmsd */
-    avb_addbet(avb, w->etot, (.5*avb->dof - 1)/w->ekin, w->rmsd, 0.0);
+    ngam = 1e-3;
+    
+    avb_addbet(avb, w->etot, (.5*avb->dof - 1)/w->ekin, w->rmsd, ngam);
     hs_add1(hs, 0, w->epot, 1.0, HIST_VERBOSE); /* add to histogram */
 
     tpe = 1.0/avb_getbet(avb, w->etot);
