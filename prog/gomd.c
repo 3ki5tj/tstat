@@ -93,7 +93,7 @@ static void domd(void)
     w->etot = w->epot + w->ekin;
     //avb_add(avb, w->etot, w->ekin, 0.0);
     cago_rotfit(w, w->x, NULL); /* compute rmsd */
-    ngam = 1e-3;
+    ngam = 0e-4;
     
     avb_addbet(avb, w->etot, (.5*avb->dof - 1)/w->ekin, w->rmsd, ngam);
     hs_add1(hs, 0, w->epot, 1.0, HIST_VERBOSE); /* add to histogram */

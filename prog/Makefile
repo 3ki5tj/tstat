@@ -24,5 +24,5 @@ volrw: avp.h
 	$(CC) -o $@ $<
 
 clean:
-	rm -f $(APP) *~ a.out  *avb.dat avp.dat epot.his  *.pos
+	rm -f $(APP) *~ a.out  *avb.dat avp.dat epot*.his vol*.his *.pos
 

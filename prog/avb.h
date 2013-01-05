@@ -23,7 +23,7 @@ typedef struct {
   double emin, emax, edel;
   double bet0; /* default temperature */
   int n, dof;
-  av_t *av, *av0, *avu;
+  av_t *av, *av0, *avu, *avek;
 } avb_t;
 
 INLINE avb_t *avb_open(double emin, double emax, double edel,
@@ -42,10 +42,12 @@ INLINE avb_t *avb_open(double emin, double emax, double edel,
   xnew(avb->av,  avb->n + 1);
   xnew(avb->av0, avb->n + 1);
   xnew(avb->avu, avb->n + 1);
+  xnew(avb->avek, avb->n + 1);
   for (i = 0; i <= avb->n; i++) {
     av_clear( &(avb->av[i]) );
     av_clear( &(avb->av0[i]) );
     av_clear( &(avb->avu[i]) );
+    av_clear( &(avb->avek[i]) );
   }
   return avb;
 }
@@ -55,6 +57,7 @@ INLINE void avb_close(avb_t *avb)
   free(avb->av);
   free(avb->av0);
   free(avb->avu);
+  free(avb->avek);
   free(avb);
 }
 
@@ -70,6 +73,7 @@ INLINE int avb_add(avb_t *avb, double etot, double ekin, double ngam)
   die_if(i < 0 || i >= avb->n, "index %d out of range, n %d, etot %g\n", i, avb->n, etot);
   fhm1 = .5f*avb->dof - 1;
   av_gadd( &(avb->av[i]), fhm1/ekin, ngam);
+  av_gadd( &(avb->avek[i]), ekin, ngam);
   av_add( &(avb->av0[i]), fhm1/ekin);
   av_add( &(avb->avu[i]), etot - ekin);
   return 0;
@@ -86,6 +90,7 @@ INLINE int avb_addbet(avb_t *avb, double etot, double bet, double f2, double nga
   die_if(i < 0 || i >= avb->n,
       "index %d out of range, n %d, etot %g\n", i, avb->n, etot);
   av_gadd( &(avb->av[i]), bet, ngam);
+  av_gadd( &(avb->avek[i]), (0.5*avb->dof - 1)/bet, ngam);
   av_add( &(avb->av0[i]), bet);
   av_add( &(avb->avu[i]), f2);
   return 0;
@@ -128,18 +133,14 @@ INLINE double avb_getbet(avb_t *avb, double etot)
   return AVB_GETBET(avb, i);
 }
 
-INLINE int avb_getdude_low(av_t *av, real dof, double *pbet)
+INLINE double avb_getdude_low(const av_t *avbet, const av_t *avek, real dof, double *pbet)
 {
-  double bet, bet2, dbde;
+  double bet, k;
 
-  bet = av_getave( av );
+  bet = av_getave( avbet );
   if (pbet) *pbet = bet;
-  bet2 = av_getvar( av ) + bet * bet;
-  bet2 *= (.5*dof - 2)/(.5*dof - 1 + 1e-16);
-  dbde = bet2 - bet * bet;
-  /* the correction must be positive
-   * TODO: dof/2 or dof/2 - 1? */
-  return dblmax( 1 + (.5*dof - 1)*dbde/(bet*bet), 1e-10 );
+  k = av_getave( avek );
+  return dblmax(k * bet - (.5*dof - 1), 1e-10);
 }
 
 /* get the local dU/dE
@@ -154,7 +155,7 @@ INLINE int avb_getdude(avb_t *avb, double etot, double *dude)
   die_if(i < 0 || i >= avb->n,
       "getdude: index %d out of range, n %d, etot %g\n", i, avb->n, etot);
   if (avb->avu[i].s < AVB_MINDATA2) return 2;
-  *dude = avb_getdude_low( &(avb->av[i]), avb->dof, NULL );
+  *dude = avb_getdude_low( &(avb->av[i]), &(avb->avek[i]), avb->dof, NULL );
   return 0;
 }
 
@@ -171,13 +172,13 @@ INLINE double avb_getbetcor(avb_t *avb, double etot)
   if (i1 < 0 || i1 >= avb->n - 1) return 0;
 
   if (avb->avu[i1].s < AVB_MINDATA2) return 0;
-  dude1 = avb_getdude_low( &(avb->av[i1]), avb->dof, &bet1);
+  dude1 = avb_getdude_low( &(avb->av[i1]), &(avb->avek[i1]), avb->dof, &bet1);
 
   /* although we can do the thermal averaging
    * we use discrete differentiation, so we need the second bin */
   i2 = i1+1;
   if (avb->avu[i2].s < AVB_MINDATA2) return 0;
-  dude2 = avb_getdude_low( &(avb->av[i2]), avb->dof, NULL );
+  dude2 = avb_getdude_low( &(avb->av[i2]), &(avb->avek[i2]), avb->dof, NULL );
 
   /* correction */
   if (dude1 > 0 && dude2 > 0)
@@ -196,7 +197,7 @@ INLINE double avb_getbetcor(avb_t *avb, double etot)
  * but it makes unweighted averaging approximate */ 
 INLINE double avb_getds(avb_t *avb, double e1, double e2, double *dscor)
 {
-  int i1, i2, i, sgn = 1, a1, a2;
+  int i1, i2, i, sgn = 1;
   double ds = 0, dude1 = 0, dude2 = 0;
  
   if (dscor) *dscor = 0; /* zero the correction by default */
@@ -244,7 +245,7 @@ INLINE int avb_write(avb_t *avb, const char *fn)
 {
   int i;
   FILE *fp;
-  double bet, cnt, bet0, cnt0, uav, tot, scal, db, db0, devb, devb0, fhm1;
+  double bet, cnt, bet0, cnt0, uav, tot, ek, dude, scal;
 
   xfopen(fp, fn, "w", return -1);
   /* count the total */
@@ -255,20 +256,17 @@ INLINE int avb_write(avb_t *avb, const char *fn)
   fprintf(fp, "# %d %g %g %g %d %g\n", avb->n, avb->emin, avb->edel,
       tot, avb->dof, avb->bet0);
   
-  fhm1 = .5*avb->dof - 1;
   for (i = 0; i < avb->n; i++) {
     bet = av_getave( &(avb->av[i]) );
-    devb = av_getdev( &(avb->av[i]) );
-    db = (devb*devb + bet*bet)*(1 - 1./fhm1) - bet*bet;
     cnt = avb->av[i].s;
     bet0 = av_getave( &(avb->av0[i]) );
-    devb0 = av_getdev( &(avb->av0[i]) );
-    db0 = (devb0*devb0 + bet0*bet0)*(1 - 1./fhm1) - bet0*bet0;
     cnt0 = avb->avu[i].s;
     uav = av_getave( &(avb->avu[i]) );
-    fprintf(fp, "%g %g %g %g %g %g %g %g %g %g %g\n",
+    ek = av_getave( &(avb->avek[i]) );
+    dude = avb_getdude_low( &(avb->av[i]), &(avb->avek[i]), avb->dof, NULL);
+    fprintf(fp, "%g %g %g %g %g %g %g %g %g\n",
       avb->emin + i * avb->edel,
-      bet, cnt, bet0, cnt0*scal, uav, cnt0, devb, db, devb0, db0);
+      bet, cnt, bet0, cnt0*scal, uav, cnt0, ek, dude);
   }
   fclose(fp);
   return 0;
