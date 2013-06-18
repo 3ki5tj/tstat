@@ -3,7 +3,7 @@ reset
 
 set encoding cp1250 # make minus sign longer
 #set encoding iso_8859_1
-set terminal postscript enhanced lw 2.0 
+set terminal postscript enhanced lw 2.0
 set output "ljmd.ps"
 
 set multiplot
@@ -18,7 +18,7 @@ x1 = 0.35
 x2 = 0.325
 x3 = 1 - x1 - x2
 
-set style line 1 lc rgb "#ff0044" lt 1 
+set style line 1 lc rgb "#ff0044" lt 1
 set style line 2 lc rgb "#228800" lt 2
 set style line 3 lc rgb "#2200cc" lt 3
 set style line 4 lc rgb "#cc0088" lt 4
@@ -33,7 +33,7 @@ set bmargin 2.0
 tcfont="Arial, 10"
 
 set mytics 5
-set ytics 0.1 font tcfont offset 0.3, 0 
+set ytics 0.1 font tcfont offset 0.3, 0
 set mxtics 4
 set xtics 2 font tcfont offset 0, 0.3
 set xlabel "{/Arial-Italic E}" offset 0, 1
@@ -81,7 +81,7 @@ plot [][0:] \
   "../data/vr.1/avb.dat" u ($1/N + hbin):($5*N)  w l ls 1 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 VR} = 0.1", \
   "../data/vr.01/avb.dat" u ($1/N + hbin):($5*N)  w l ls 2 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 VR} = 0.01", \
   "../data/vr.001/avb.dat" u ($1/N + hbin):($5*N) w l ls 3 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 VR} = 0.001", \
-  "../data/vrbad/avb.dat" u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified" 
+  "../data/vrbad/avb.dat" u ($1/N + hbin):($5*N) w l ls 5 t "Unmodified"
 
 
 
@@ -141,7 +141,7 @@ set key width -2
 plot [][0:0.35] \
   "../data/nhc10d.002/avb.dat"  u ($1/N + hbin):($5*N) w l ls 1 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.002", \
   "../data/nhc10d.0005/avb.dat" u ($1/N + hbin):($5*N) w l ls 2 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.0005", \
-  "../data/nhc10d.0001/avb.dat" u ($1/N + hbin):($5*N) w l ls 3 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.0001" 
+  "../data/nhc10d.0001/avb.dat" u ($1/N + hbin):($5*N) w l ls 3 t "{/Symbol-Oblique D}{/Arial-Italic t}_{/=8 MD} = 0.0001"
 
 unset ylabel
 

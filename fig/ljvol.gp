@@ -21,7 +21,7 @@ set bmargin 3.
 tcfont="Arial, 10"
 
 set mytics 5
-set ytics 0.5 font tcfont offset 0.5, 0 
+set ytics 0.5 font tcfont offset 0.5, 0
 set mxtics 4
 set xtics .1 font tcfont offset 0, 0.3
 set key spacing 1.5
@@ -29,9 +29,9 @@ set key spacing 1.5
 dx = 0.01
 dy = 0.03
 
-set style line 1 lc rgb "#ff0044" lt 1 
-set style line 2 lc rgb "#22cc00" lt 1 
-set style line 3 lc rgb "#2200cc" lt 1 
+set style line 1 lc rgb "#ff0044" lt 1
+set style line 2 lc rgb "#22cc00" lt 1
+set style line 3 lc rgb "#2200cc" lt 1
 
 
 set label 1 "(a)" at screen dx, 1-dy
@@ -57,7 +57,7 @@ plot [.05:.75][0:2] \
 
 set origin 0.5, 0.0
 
-set ytics 0.1 
+set ytics 0.1
 set ylabel 'Pressure ~{{/Arial-Italic p}{/=8 &.}}{0.3\^}{/=10 &.}({/Arial-Italic n}{/=6 &.})' offset 2.5, 0
 set yrange [:0.3]
 set key left top

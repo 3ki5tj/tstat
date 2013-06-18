@@ -148,7 +148,7 @@ INLINE double avb_getdude_low(const av_t *avbet, const av_t *avek, real dof, dou
 INLINE int avb_getdude(avb_t *avb, double etot, double *dude)
 {
   int i;
-  
+
   if (etot < avb->emin || etot >= avb->emax)
     return 1;
   i = (int)( (etot - avb->emin) / avb->edel );
@@ -164,7 +164,7 @@ INLINE double avb_getbetcor(avb_t *avb, double etot)
 {
   int i1, i2;
   double bet1, dude1, dude2, cor;
-  
+
   if (etot < avb->emin || etot >= avb->emax)
     return 0;
   i1 = (int)( (etot - avb->emin) / avb->edel );
@@ -194,12 +194,12 @@ INLINE double avb_getbetcor(avb_t *avb, double etot)
 
 /* get the entropy difference: dS = S(e2) - S(e1)
  * *dscor is a correction intended to get the flat potential-energy histogram
- * but it makes unweighted averaging approximate */ 
+ * but it makes unweighted averaging approximate */
 INLINE double avb_getds(avb_t *avb, double e1, double e2, double *dscor)
 {
   int i1, i2, i, sgn = 1;
   double ds = 0, dude1 = 0, dude2 = 0;
- 
+
   if (dscor) *dscor = 0; /* zero the correction by default */
 
   if (e1 > e2) { sgn = -1; dblswap(e1, e2); }
@@ -209,7 +209,7 @@ INLINE double avb_getds(avb_t *avb, double e1, double e2, double *dscor)
   /* make no correction for E outside of the range */
   if (e1 < avb->emin) { ds += (avb->emin - e1) * avb->bet0; e1 = avb->emin; }
   if (e2 >= avb->emax) { ds += (e2 - avb->emax) * avb->bet0; e2 = avb->emax - 1e-8; }
-  
+
   i1 = (int)( (e1 - avb->emin) / avb->edel );
   i2 = (int)( (e2 - avb->emin) / avb->edel );
   die_if(i1 < 0 || i1 >= avb->n || i2 < 0 || i2 >= avb->n,
@@ -255,7 +255,7 @@ INLINE int avb_write(avb_t *avb, const char *fn)
   scal = 1.0/(tot*avb->edel);
   fprintf(fp, "# %d %g %g %g %d %g\n", avb->n, avb->emin, avb->edel,
       tot, avb->dof, avb->bet0);
-  
+
   for (i = 0; i < avb->n; i++) {
     bet = av_getave( &(avb->av[i]) );
     cnt = avb->av[i].s;
@@ -305,9 +305,9 @@ INLINE int avb_mcvrescale(avb_t *avb, real *v, int nd,
 
   ds = avb_getds(avb, etot1, etot2, epcor ? &dsc : 0);
   r = ds - .5*avb->dof*(logek2 - logek1);
-  
+
   if (r <= 0 || rnd0() < exp(-r)) {
-ACC:    
+ACC:
     s = (real) sqrt(ek2/ek1);
     for (i = 0; i < nd; i++)
       v[i] *= s;
@@ -339,7 +339,7 @@ INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d,
   }
   ek2 = ek1 + eki2 - eki1;
   etot2 = ek2 + ep;
-  
+
   bet2 = avb_getbet(avb, etot2);
   lnrose = .5*d*log(bet1/bet2);
   ds = avb_getds(avb, etot1, etot2, epcor ? &dsc : 0);
@@ -349,7 +349,7 @@ INLINE int avb_mcandersen(avb_t *avb, real *v, int n, int d,
     for (j = 0; j < d; j++)
       v[i*d + j] = vi[j];
     *ekin = ek2;
-    *tkin = 2.*ek2/avb->dof; 
+    *tkin = 2.*ek2/avb->dof;
     return 1;
   } else {
     return 0;

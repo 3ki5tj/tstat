@@ -44,7 +44,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-a", "%r", &mcamp,    "step size for Metropolics algorithm");
   argopt_add(ao, "-q", "%r", &thermdt,  "time step for the mc thermostat");
   argopt_add(ao, "-m", "%d", &method,   "0: mc samp");
-  argopt_add(ao, "-M", "%d", &betmeth,  "0: plain average; 1: ratio average");  
+  argopt_add(ao, "-M", "%d", &betmeth,  "0: plain average; 1: ratio average");
   argopt_add(ao, "-Q", "%r", &hooverQ,  "mass of the thermostat");
   argopt_add(ao, "-w", "%b", &usesw,    "use switched potential");
   argopt_add(ao, "-s", "%r", &rshift,   "potential shift distance");
@@ -57,7 +57,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "--vmax", "%r", &vmax,     "maximal potential energy");
   argopt_add(ao, "--vdel", "%r", &vdel,     "potential energy interval");
   argopt_add(ao, "--every", "%d", &nevery,   "print message every this # of steps");
-  argopt_add(ao, "--report", "%d", &nreport, "save data every this # of steps");  
+  argopt_add(ao, "--report", "%d", &nreport, "save data every this # of steps");
   argopt_addhelp(ao, "-h");
   argopt_parse(ao, argc, argv);
 
@@ -101,19 +101,19 @@ static void domc(lj_t *lj)
   printf("%d bins\n", avb->n);
   /* histogram for the potential energy */
   hs = hs_open(1, vmin*N, vmax*N, vdel*N);
-  
+
   lj->etot = .5f*(avb->emax + avb->emin); /* put it in the middle */
 
   for (t = 1; t <= nsteps; t++) { /* real simulation */
     acc += lj_microcan(lj, mcamp);
-    
+
     lj->ekin = lj->etot - lj->epot;
     if (betmeth == 0) {
       avb_add(avb, lj->etot, lj->ekin, 0.f);
     } else { /* use the biased ratio method */
       avb_addbetrat(avb, lj->etot, .5*lj->dof/lj->ekin, lj->ekin, 0.f);
     }
-    
+
     if (restrain) {
       etmin = emin;
       etmax = emax;

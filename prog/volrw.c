@@ -69,7 +69,7 @@ static void output(avp_t *avp, const char *fn)
   FILE *fp;
   int i, j, id, m = 10, nm;
   double dvol, *fe, *pr, rho0, rho1, p;
-  
+
   nm = avp->n * m;
   xnew(pr, avp->n*m + 1);
   xnew(fe, avp->n*m + 1);
@@ -87,7 +87,7 @@ static void output(avp_t *avp, const char *fn)
     }
   }
   pr[nm] = pr[nm-1];
-  
+
   xfopen(fp, fn, "w", return);
   for (i = 0; i <= nm; i++) {
     rho0 = avp->rhomin + i * avp->rhodel/m;
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
   //int row, ver;
   //unsigned fflags;
   //double vmin, vmax, vdel;
-  
+
   doargs(argc, argv);
 
   die_if ((avp = avp_load(fnavp)) == NULL, "cannot load avp from %s\n", fnavp);

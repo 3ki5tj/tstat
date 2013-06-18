@@ -54,10 +54,10 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-x", "%d", &ensexp,   "ensemble exponent");
   argopt_add(ao, "-Q", "%r", &hooverQ,  "mass for the Nose-Hoover thermostat");
   argopt_add(ao, "-W", "%r", &hooverW,  "mass for the Nose-Hoover (full Langevin) barostat");
-  argopt_add(ao, "-R", "%d", &nhM,      "number of Nose-Hoover chain variables");  
+  argopt_add(ao, "-R", "%d", &nhM,      "number of Nose-Hoover chain variables");
   argopt_add(ao, "-Z", "%r", &zeta0,    "damping for full Langevin barostat");
   argopt_add(ao, "--every", "%d", &nevery,   "print message every this # of steps");
-  argopt_add(ao, "--report", "%d", &nreport, "save data every this # of steps");   
+  argopt_add(ao, "--report", "%d", &nreport, "save data every this # of steps");
   argopt_addhelp(ao, "-h");
   argopt_parse(ao, argc, argv);
 
@@ -189,7 +189,7 @@ static void domd(lj_t *lj)
     /* angular momenta are not conserved because of PBC */
     /* lj_shiftang(lj, lj->x, lj->v);  */
     lj->ekin = md_ekin(lj->v, lj->n*lj->d, lj->dof, &lj->tkin);
-    
+
     GETPRV();
 
     if (method == 0 || method == 10) {
@@ -221,7 +221,7 @@ static void domd(lj_t *lj)
     hs_add1(hs, 0, lj->vol, 1.0, HIST_VERBOSE); /* add to histogram */
     if (t % nevery == 0)
         printf("t %d, u %g, ek %g, bet %g, rho %g(%g), pr %g, prv %g, pacc %g, tacc %g\n",
-          t, lj->epot/lj->n, lj->ekin/lj->n, 1.f/lj->tkin, lj->n/lj->vol, 
+          t, lj->epot/lj->n, lj->ekin/lj->n, 1.f/lj->tkin, lj->n/lj->vol,
           lj->n/av_getave(avv), pr, prv, 1.0*pacc/(1e-6 + ptot), 1.0*tacc/t);
     if (t % nreport == 0) {
       avp_write(avp, "avp.dat");

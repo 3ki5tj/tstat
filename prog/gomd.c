@@ -1,3 +1,7 @@
+/*
+#define HAVEREAL
+typedef float real;
+*/
 #define ZCOM_PICK
 #define ZCOM_CAGO
 #define ZCOM_AV
@@ -5,6 +9,8 @@
 #define ZCOM_ARGOPT
 #include "zcom.h"
 #include "avb.h"
+
+
 
 /* Ca-Go model */
 real kb = 200.f;
@@ -36,6 +42,8 @@ int nreport = 2000000;
 int restrain = 0;
 int epcorr = 0; /* try to make flat potential-energy histogram */
 
+
+
 /* handle input arguments */
 static void doargs(int argc, char **argv)
 {
@@ -46,7 +54,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "-d", "%r", &mddt,     "time step for molecular dynamics");
   argopt_add(ao, "-q", "%r", &thermdt,  "time step for mc-vrescaling thermostat");
   argopt_add(ao, "-c", "%r", &rcc,      "cutoff distance for selecting contacts");
-  argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: vrescale");  
+  argopt_add(ao, "-m", "%d", &method,   "0: mc samp; 1: vrescale");
   argopt_add(ao, "-R", "%b", &restrain, "hard restrain energy levels");
   argopt_add(ao, "-C", "%b", &epcorr,   "aim at a flat potential-energy histogram");
   argopt_add(ao, "--emin", "%r", &emin,     "minimal total energy");
@@ -66,23 +74,27 @@ static void doargs(int argc, char **argv)
 }
 
 
+
 static void domd(void)
 {
   cago_t *w;
   int it, tacc = 0;
   static av_t avep[1], avet[1];
   real tpe, etmin, etmax, ngam;
+  real rmsd = 0, etot = 0;
   avb_t *avb;
   hist_t *hs;
 
-  w = cago_open(fnpdb, kb, ka, kd1, kd3, nbe, nbc, rcc);
-  cago_initmd(w, 0.1, 0.0);
+  w = cago_open(fnpdb, kb, ka, kd1, kd3, nbe, nbc, rcc,
+                PDB_CONTACT_HEAVY, 4, CAGO_VERBOSE);
+  cago_initmd(w, 0, 0.1, 0.0);
   printf("epot %g, epotref %g\n", w->epot, w->epotref);
 
   avb = avb_open(emin, emax, edel, 1.0/tp, w->dof);
   hs = hs_open(1, vmin, vmax, vdel);
 
-/* // 2CI2
+/*
+  // 2CI2
   avb = avb_open(-50, 100, 0.5, w->dof);
   hs = hs_open(1, -160.0, 320.0, 0.01);
 */
@@ -90,37 +102,38 @@ static void domd(void)
   for (it = 1; it <= nsteps; it++) {
     cago_vv(w, 1.0f, mddt);
     cago_rmcom(w, w->x, w->v);
-    w->etot = w->epot + w->ekin;
-    //avb_add(avb, w->etot, w->ekin, 0.0);
-    cago_rotfit(w, w->x, NULL); /* compute rmsd */
+    etot = w->epot + w->ekin;
+    /* avb_add(avb, etot, w->ekin, 0.0); */
+    rmsd = cago_rmsd(w, w->x, NULL); /* compute rmsd */
     ngam = 0e-4;
-    
-    avb_addbet(avb, w->etot, (.5*avb->dof - 1)/w->ekin, w->rmsd, ngam);
+
+    avb_addbet(avb, etot, (.5*avb->dof - 1)/w->ekin, rmsd, ngam);
     hs_add1(hs, 0, w->epot, 1.0, HIST_VERBOSE); /* add to histogram */
 
-    tpe = 1.0/avb_getbet(avb, w->etot);
+    tpe = 1.0 / avb_getbet(avb, etot);
     if (restrain) {
       etmin = emin;
       etmax = emax;
     } else {
       etmin = etmax = 0;
     }
-    if (method == 0) { 
-      tacc += avb_mcvrescale(avb, (real *) w->v, w->n * 3, 
+    if (method == 0) {
+      tacc += avb_mcvrescale(avb, (real *) w->v, w->n * 3,
           thermdt, w->epot, &w->ekin, &w->tkin, etmin, etmax, epcorr);
     } else {
       if (epcorr) {
-        double corr = avb_getbetcor(avb, w->etot);
+        double corr = avb_getbetcor(avb, etot);
         tpe = 1.f/(1.f/tpe + corr);
       }
       md_vrescale3d(w->v, w->n, w->dof, tpe, thermdt, &w->ekin, &w->tkin);
     }
     av_add(avep, w->epot);
-    av_add(avet, w->etot);
+    av_add(avet, etot);
 
     if (it % nevery == 0) {
-      printf("t %d, ep %g/%g, etot %g/%g, T %g/%g, rmsd %g, tacc %g\n", it, w->epot,
-        av_getave(avep), w->etot, av_getave(avet), w->tkin, tpe, w->rmsd, 1.0*tacc/it);
+      printf("t %d, ep %g/%g, etot %g/%g, T %g/%g, rmsd %g, tacc %g\n",
+          it, w->epot, av_getave(avep), etot, av_getave(avet),
+          w->tkin, tpe, rmsd, 1.0*tacc/it);
     }
     if (it % nreport == 0) {
       avb_write(avb, "goavb.dat");
@@ -130,6 +143,8 @@ static void domd(void)
   }
   cago_close(w);
 }
+
+
 
 int main(int argc, char **argv)
 {

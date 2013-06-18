@@ -77,7 +77,7 @@ static void outpute(avb_t *avb, const char *fn)
   FILE *fp;
   int i, j, id, m = 10, nm;
   double *en, *bt, ene, b;
-  
+
   nm = avb->n * m;
   xnew(bt, nm + 1);
   xnew(en, nm + 1);
@@ -93,7 +93,7 @@ static void outpute(avb_t *avb, const char *fn)
     }
   }
   bt[nm] = bt[nm-1];
-  
+
   xfopen(fp, fn, "w", return);
   for (i = 0; i <= nm; i++) {
     ene = avb->emin + (i + .5) * avb->edel/m;
@@ -180,7 +180,7 @@ static void outputu(avb_t *avb, hist_t *hs, const char *fn)
   FILE *fp;
   int i;
   double s, u, *lnw, *lng;
-  
+
   xnew(lnw, hs->n + 1);
   xnew(lng, hs->n + 1);
   for (i = 0; i < hs->n; i++) {
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
   int row, ver;
   unsigned fflags;
   double vmin, vmax, vdel;
-  
+
   doargs(argc, argv);
 
   die_if ((avb = avb_load(fnavb)) == NULL,

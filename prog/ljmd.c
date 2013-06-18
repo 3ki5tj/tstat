@@ -57,7 +57,7 @@ static void doargs(int argc, char **argv)
   argopt_add(ao, "--vmax", "%r", &vmax,     "maximal potential energy");
   argopt_add(ao, "--vdel", "%r", &vdel,     "potential energy interval");
   argopt_add(ao, "--every", "%d", &nevery,   "print message every this # of steps");
-  argopt_add(ao, "--report", "%d", &nreport, "save data every this # of steps");  
+  argopt_add(ao, "--report", "%d", &nreport, "save data every this # of steps");
   argopt_addhelp(ao, "-h");
   argopt_parse(ao, argc, argv);
 
@@ -115,13 +115,13 @@ static void domd(lj_t *lj)
       }
 
     }
-    
+
     if (method == 22) {
       lj_vv(lj, mddt/tpe);
     } else {
       lj_vv(lj, mddt);
     }
-    
+
     if (method % 10 != 3 && method % 10 != 4) {
       lj_shiftcom(lj, lj->v);
       /* angular momentum can be broken by PBC */
@@ -130,7 +130,7 @@ static void domd(lj_t *lj)
     }
 
     GETTPE();
-    
+
     if (method == 0) { /* sampling the kinetic energy */
       tacc += lj_mcvrescale(lj, tpe, thermdt);
     } else if (method == 10){ /* sampling the kinetic energy, exact */
@@ -157,9 +157,9 @@ static void domd(lj_t *lj)
 
     } else if (method % 10 == 3) { /* Andersen */
       if (method == 23) { /* exact Andersen */
-        tacc += avb_mcandersen(avb, lj->v, lj->n, lj->d, 
+        tacc += avb_mcandersen(avb, lj->v, lj->n, lj->d,
           lj->epots, &lj->ekin, &lj->tkin, 0);
-      } else { /* approximate Andersen */ 
+      } else { /* approximate Andersen */
         if (rnd0() < tpmin/tpe || method == 13) /* 13: wrong Andersen thermostat */
           md_andersen(lj->v, lj->n, lj->d, tpe);
       }

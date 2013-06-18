@@ -32,7 +32,7 @@ typedef struct {
   av_t *av, *av0;
 } avp_t;
 
-INLINE avp_t *avp_open(double rhomin, double rhomax, double rhodel, 
+INLINE avp_t *avp_open(double rhomin, double rhomax, double rhodel,
     int np, int dof, int ensexp, double prv0, double wlimit)
 {
   avp_t *avp;
@@ -109,7 +109,7 @@ INLINE double avp_getdW(avp_t *avp, double vol1, double vol2)
 {
   int i1, i2, i, sgn = 1, np = avp->np;
   double dW = 0, rho1, rho2;
-  
+
   if (vol1 > vol2) { sgn = -1; dblswap(vol1, vol2); }
   if (vol2 < avp->vmin || vol1 >= avp->vmax) return (vol2 - vol1) * sgn * avp->prv0;
 
@@ -119,7 +119,7 @@ INLINE double avp_getdW(avp_t *avp, double vol1, double vol2)
 
   if (rho1 < avp->rhomin) { dW += (np/rho1 - np/avp->rhomin) * avp->prv0; rho1 = avp->rhomin; }
   if (rho2 >= avp->rhomax) { dW += (np/avp->vmax - np/rho2) * avp->prv0; rho2 = avp->rhomax - 1e-8; }
-  
+
   i1 = (int)( (rho1 - avp->rhomin) / avp->rhodel );
   i2 = (int)( (rho2 - avp->rhomin) / avp->rhodel );
   die_if(i1 < 0 || i1 >= avp->n || i2 < 0 || i2 >= avp->n,
@@ -151,7 +151,7 @@ INLINE int avp_write(avp_t *avp, const char *fn)
   scal = 1.0/tot;
   fprintf(fp, "# %d %g %g %g %d %d %d %g\n", avp->n,
     avp->rhomin, avp->rhodel, tot, avp->np, avp->dof, avp->ensexp, avp->prv0);
-  
+
   for (i = 0; i < avp->n; i++) {
     prv = av_getave( &(avp->av[i]) );
     w = avp->av[i].s;
